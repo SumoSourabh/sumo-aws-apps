@@ -1,0 +1,302 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: "A CloudFormation template that creates a role for authenticating with\
+  \ Sumo\u2019s AWS integrations."
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: sumo-amazon-s3-audit-app
+    Description: SumoLogic Amazon S3 Audit Application
+    Author: user1
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: s3://sumologic-sam-app/60dd855ef60687184c3b1f69ed374378
+    ReadmeUrl: s3://sumologic-sam-app/f8285cccc5d34fffb8bf3f1bb6b59413
+    Labels:
+    - S3Audit
+    HomePageUrl: https://github.com/user1/my-app-project
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/user1/my-app-project
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Sumo Logic Deployment Configuration
+      Parameters:
+      - SumoDeployment
+      - SumoAccessID
+      - SumoAccessKey
+    - Label:
+        default: Sumo Logic Collection Configuration
+      Parameters:
+      - CollectorName
+      - SourceName
+      - SourceCategoryName
+      - PathExpression
+      - RemoveSumoResourcesOnDeleteStack
+    - Label:
+        default: S3 Audit Configuration
+      Parameters:
+      - ExternalID
+      - AccessLogsTargetS3BucketName
+      - CreateTargetS3Bucket
+    ParameterLabels:
+      SumoDeployment:
+        default: Deployment Name
+      SumoAccessID:
+        default: Access ID
+      SumoAccessKey:
+        default: Access Key
+      CollectorName:
+        default: Collector Name
+      SourceName:
+        default: Source Name
+      SourceCategoryName:
+        default: Source Category
+      PathExpression:
+        default: Path Expression
+      RemoveSumoResourcesOnDeleteStack:
+        default: Remove Sumo Resources On Delete Stack
+      ExternalID:
+        default: IAM Role ExternalID
+      AccessLogsTargetS3BucketName:
+        default: Target BucketName
+      CreateTargetS3Bucket:
+        default: Do you want to create a target S3 bucket?
+Parameters:
+  CollectorName:
+    Type: String
+    Default: S3AuditCollector
+  SourceName:
+    Type: String
+    Default: S3AuditEvents
+  SourceCategoryName:
+    Type: String
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access
+      . This data is queried using the '_sourceCategory' key name.
+  SumoAccessID:
+    Type: String
+  SumoAccessKey:
+    Type: String
+  SumoDeployment:
+    Type: String
+    AllowedValues:
+    - au
+    - ca
+    - de
+    - eu
+    - jp
+    - us2
+    - us1
+    Description: Enter au, ca, de, eu, jp, us2, or us1
+  RemoveSumoResourcesOnDeleteStack:
+    AllowedValues:
+    - true
+    - false
+    Default: false
+    Description: To delete collector, sources and app when stack is deleted, set this
+      parameter to true. Default is false.
+    Type: String
+  ExternalID:
+    Type: String
+    Description: An ID used in the trust policy to designate who can assume the role,
+      formatted as deployment:accountId. Eg. us1:0000000000000131
+  AccessLogsTargetS3BucketName:
+    Type: String
+    Description: S3 access logs target buket name.
+  CreateTargetS3Bucket:
+    Type: String
+    Default: 'no'
+    AllowedValues:
+    - 'yes'
+    - 'no'
+  PathExpression:
+    Type: String
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log
+      or ABC.log
+Conditions:
+  CreateBucket:
+    Fn::Equals:
+    - Ref: CreateTargetS3Bucket
+    - 'yes'
+Resources:
+  SumoRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: arn:aws:iam::926226587429:root
+          Action: sts:AssumeRole
+          Condition:
+            StringEquals:
+              sts:ExternalId:
+                Ref: ExternalID
+      Path: /
+      Policies:
+      - PolicyName: SumoPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:GetObject
+            - s3:GetObjectVersion
+            - s3:ListBucketVersions
+            - s3:ListBucket
+            Resource:
+            - Fn::Sub:
+              - arn:aws:s3:::${S3bucketName}
+              - S3bucketName:
+                  Ref: AccessLogsTargetS3BucketName
+            - Fn::Sub:
+              - arn:aws:s3:::${S3bucketName}/*
+              - S3bucketName:
+                  Ref: AccessLogsTargetS3BucketName
+  TargetS3Bucket:
+    Type: AWS::S3::Bucket
+    Condition: CreateBucket
+    Properties:
+      BucketName:
+        Ref: AccessLogsTargetS3BucketName
+      NotificationConfiguration:
+        TopicConfigurations:
+        - Event: s3:ObjectCreated:Put
+          Topic:
+            Ref: sumoS3AuditTopic
+  sumoS3AuditTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName:
+        Fn::Sub: SumoSNSTopic-${AWS::StackName}
+  sumoSNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn:
+        Ref: sumoS3AuditTopic
+      Endpoint:
+        Fn::GetAtt:
+        - SumoS3AuditSource
+        - SUMO_ENDPOINT
+      Protocol: https
+      DeliveryPolicy:
+        healthyRetryPolicy:
+          numRetries: 40
+          minDelayTarget: 10
+          maxDelayTarget: 300
+          numMinDelayRetries: 3
+          numMaxDelayRetries: 5
+          numNoDelayRetries: 0
+          backoffFunction: exponential
+  sumoSNSpolicy:
+    Properties:
+      PolicyDocument:
+        Id: SumoTopicPolicy
+        Statement:
+        - Action: sns:Publish
+          Condition:
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
+            ArnLike:
+              aws:SourceArn:
+                Fn::Sub: arn:aws:s3:*:*:${AccessLogsTargetS3BucketName}
+          Effect: Allow
+          Principal:
+            AWS: '*'
+          Resource:
+            Ref: sumoS3AuditTopic
+      Topics:
+      - Ref: sumoS3AuditTopic
+    Type: AWS::SNS::TopicPolicy
+  SumoAppUtils:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: https://s3.us-west-2.amazonaws.com/sumologic-sam-app/31e9e7e7f7541472a149819bd462eb9f.template
+  SumoHostedCollector:
+    Type: Custom::Collector
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Outputs.SumoAppUtilsFunction
+      Region:
+        Ref: AWS::Region
+      CollectorType: Hosted
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      CollectorName:
+        Ref: CollectorName
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+  SumoS3AuditSource:
+    Type: Custom::S3AuditSource
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Outputs.SumoAppUtilsFunction
+      Region:
+        Ref: AWS::Region
+      SourceName:
+        Ref: SourceName
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      SourceCategory:
+        Ref: SourceCategoryName
+      CollectorId:
+        Fn::GetAtt:
+        - SumoHostedCollector
+        - COLLECTOR_ID
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+      TargetBucketName:
+        Ref: AccessLogsTargetS3BucketName
+      PathExpression:
+        Ref: PathExpression
+      RoleArn:
+        Fn::GetAtt:
+        - SumoRole
+        - Arn
+  SumoAmazonS3AuditApp:
+    Type: Custom::App
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Outputs.SumoAppUtilsFunction
+      Region:
+        Ref: AWS::Region
+      AppName: Amazon S3 Audit
+      AppId: cf3ba421-d959-4b08-9ae8-5bd4202eea87
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      AppSources:
+        paramId123:
+          Fn::Sub: _sourceCategory=${SourceCategoryName}
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+Outputs:
+  SumoRoleArn:
+    Description: ARN of the cretaed Role.
+    Value:
+      Fn::GetAtt:
+      - SumoRole
+      - Arn
+  SumoEndpoint:
+    Description: SNS Subscription Endpoint
+    Value:
+      Fn::GetAtt:
+      - SumoS3AuditSource
+      - SUMO_ENDPOINT
