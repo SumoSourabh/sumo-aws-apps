@@ -14,8 +14,8 @@ Metadata:
     Description: SumoAppUtils
     Author: user1
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: s3://sumologic-sam-app/60dd855ef60687184c3b1f69ed374378
-    ReadmeUrl: s3://sumologic-sam-app/4d5a92c06a7fa9d956a900e51a1f6be4
+    LicenseUrl: s3://sumo-ct-app-bucket/60dd855ef60687184c3b1f69ed374378
+    ReadmeUrl: s3://sumo-ct-app-bucket/4d5a92c06a7fa9d956a900e51a1f6be4
     Labels:
     - tests
     HomePageUrl: https://github.com/user1/my-app-project
@@ -27,7 +27,7 @@ Resources:
     Properties:
       Handler: main.handler
       Runtime: python3.7
-      CodeUri: s3://sumologic-sam-app/548d8b1b97d4deee1b50f51e4456cab6
+      CodeUri: s3://sumo-ct-app-bucket/5288189d413b10ea17cb2e3b5f82ae9b
       MemorySize: 128
       Timeout: 300
 Outputs:
