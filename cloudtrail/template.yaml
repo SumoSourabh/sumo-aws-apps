@@ -2,6 +2,18 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: 'AWS::Serverless-2016-10-31'
 
 Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: sumo-cloudtrail
+    Description: SumoLogic AWS CloudTrail Application
+    Author: user1
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: ".\/..\/licence.txt"
+    ReadmeUrl: ".\/README.md"
+    Labels: ['tests']
+    HomePageUrl: https://github.com/user1/my-app-project
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/user1/my-app-project
+
   AWS::CloudFormation::Interface:
     ParameterGroups:
       -
@@ -138,7 +150,7 @@ Resources:
                 - { S3bucketName: !Ref CloudTrailTargetS3BucketName  }
 
   SumoAppUtils:
-    Type: AWS::CloudFormation::Stack
+    Type: AWS::Serverless::Application
     Properties:
       Location: "..\/sumologic-app-utils/packaged.yaml"
   
@@ -279,6 +291,10 @@ Resources:
         SumoDeployment: !Ref SumoDeployment
 
 Outputs:
-    SumoCloudTrailAppFolder:
-      Description: "Folder Name"
-      Value: !GetAtt SumoCloudTrailApp.APP_FOLDER_NAME
+  SumoRoleArn:
+    Description: ARN of the cretaed Role.
+    Value: !GetAtt SumoRole.Arn
+
+  SumoEndpoint:
+    Description: SNS Subscription Endpoint
+    Value: !GetAtt SumoS3Source.SUMO_ENDPOINT

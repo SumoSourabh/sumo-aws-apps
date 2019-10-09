@@ -1,6 +1,18 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: sumo-cloudtrail
+    Description: SumoLogic AWS CloudTrail Application
+    Author: user1
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: s3://sumo-app-utils/60dd855ef60687184c3b1f69ed374378
+    ReadmeUrl: s3://sumo-app-utils/d41d8cd98f00b204e9800998ecf8427e
+    Labels:
+    - tests
+    HomePageUrl: https://github.com/user1/my-app-project
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/user1/my-app-project
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
@@ -137,9 +149,9 @@ Resources:
               - S3bucketName:
                   Ref: CloudTrailTargetS3BucketName
   SumoAppUtils:
-    Type: AWS::CloudFormation::Stack
+    Type: AWS::Serverless::Application
     Properties:
-      Location: ../sumologic-app-utils/packaged.yaml
+      Location: https://s3.us-west-2.amazonaws.com/sumo-app-utils/6b43c0a48936c16844eed8eb5be9a4b6.template
   TargetS3Bucket:
     Type: AWS::S3::Bucket
     Condition: CreateBucket
@@ -312,9 +324,15 @@ Resources:
       SumoDeployment:
         Ref: SumoDeployment
 Outputs:
-  SumoCloudTrailAppFolder:
-    Description: Folder Name
+  SumoRoleArn:
+    Description: ARN of the cretaed Role.
     Value:
       Fn::GetAtt:
-      - SumoCloudTrailApp
-      - APP_FOLDER_NAME
+      - SumoRole
+      - Arn
+  SumoEndpoint:
+    Description: SNS Subscription Endpoint
+    Value:
+      Fn::GetAtt:
+      - SumoS3Source
+      - SUMO_ENDPOINT
