@@ -203,6 +203,20 @@ config()
 	read -p 'AccessLogsTargetS3BucketName: ':  AccessLogsTargetS3BucketName
 	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
+
+	sam deploy --template-file packaged.yaml --stack-name  sumologic-config-stack \
+	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
+	--parameter-overrides SumoDeployment=$sumo_deployment \
+	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
+	CollectorName=$collector_name \
+	SourceName=$SourceName \
+	SourceCategoryName=$SourceCategoryName \
+	ExternalID=$ExternalID \
+	PathExpression=$PathExpression \
+	ConfigTargetS3BucketName=$AccessLogsTargetS3BucketName \
+	CreateTargetS3Bucket=$CreateTargetS3Bucket \
+	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
+
 }
 cloudtrail(){
 	cd sumologic-app-utils 

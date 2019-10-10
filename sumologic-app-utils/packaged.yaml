@@ -27,7 +27,7 @@ Resources:
     Properties:
       Handler: main.handler
       Runtime: python3.7
-      CodeUri: s3://sumo-app-utils/d2b7e6762cf4996266daa9abcda20a17
+      CodeUri: s3://sumo-app-utils/4f06141f37ae74b80f09c33b1a15f198
       MemorySize: 128
       Timeout: 300
 Outputs:

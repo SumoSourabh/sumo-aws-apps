@@ -266,7 +266,7 @@ Resources:
         ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
         Region: !Ref "AWS::Region"
         SourceName: !Ref SourceName
-        S3BucketName: !Ref CloudTrailTargetS3BucketName
+        TargetBucketName: !Ref CloudTrailTargetS3BucketName
         RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
         SourceCategory: !Ref SourceCategoryName
         CollectorId: !GetAtt SumoHostedCollector.COLLECTOR_ID
