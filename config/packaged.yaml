@@ -66,10 +66,8 @@ Parameters:
     Default: ConfigSource
   SourceCategoryName:
     Type: String
-    Default: AWS/Labs/Config
   SumoAccessID:
     Type: String
-    Default: suoFEQzVHxbkub
   SumoAccessKey:
     Type: String
   SumoDeployment:
@@ -106,7 +104,6 @@ Parameters:
     - 'no'
   PathExpression:
     Type: String
-    Default: AWSLogs/*
     Description: Path expression to match one or more S3 objects. For example, ABC*.log
       or ABC.log
 Conditions:
