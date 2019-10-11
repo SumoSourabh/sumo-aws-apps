@@ -22,7 +22,7 @@ guard_duty_benchmark()
 	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
 	#sam deploy --template-file packaged.yaml --stack-name  sumologic-app-utils --capabilities CAPABILITY_IAM
 	echo Installing..........
-	cd guardduty/benchmark
+	cd ..\/guardduty/benchmark
 	rm -r .aws-sam
 	sam build -t template.yaml
 	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
