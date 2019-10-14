@@ -164,7 +164,7 @@ class Collector(Resource):
 
 
 class S3SourceBase(Resource):
-    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, source_type, *args, **kwargs):
+    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, source_type, props, *args, **kwargs):
 
         endpoint = source_id = None
         params = {
@@ -190,6 +190,13 @@ class S3SourceBase(Resource):
             "paused": False,
             "category": source_category
         }
+
+        if 'filters' in props :
+            params['filters'] = props.get('filters')
+        if 'multilineProcessingEnabled' in props :
+            params['multilineProcessingEnabled'] = props.get('multilineProcessingEnabled')
+        if 'useAutolineMatching' in props:
+            params['useAutolineMatching'] = props.get('useAutolineMatching')
 
         try:
             resp = self.sumologic_cli.create_source(collector_id, {"source": params})
@@ -241,18 +248,19 @@ class S3SourceBase(Resource):
             "bucket_name": props.get("TargetBucketName"),
             "path_expression": props.get("PathExpression"),
             "role_arn": props.get("RoleArn"),
-            "source_id": source_id
+            "source_id": source_id,
+            "props": props
         }
 
 class S3AuditSource(S3SourceBase):
-    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn,*args, **kwargs):
+    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, props, *args, **kwargs):
         return super().create(collector_id, source_name, source_category,
-                              bucket_name, path_expression, role_arn, 'AwsS3AuditBucket', *args, **kwargs)
+                              bucket_name, path_expression, role_arn, 'AwsS3AuditBucket', props, *args, **kwargs)
 
 class S3Source(S3SourceBase):
-    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn,*args, **kwargs):
+    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, props, *args, **kwargs):
         return super().create(collector_id, source_name, source_category,
-                              bucket_name, path_expression, role_arn, 'AwsS3Bucket', *args, **kwargs)
+                              bucket_name, path_expression, role_arn, 'AwsS3Bucket', props, *args, **kwargs)
 
 
 
@@ -532,8 +540,8 @@ class App(Resource):
 if __name__ == '__main__':
     params = {
 
-        "access_id": "suBtoxGR9wukdw",
-        "access_key": "WYtXJhYPZlYTnV0bLIbKTfWMeayAetPZnwoCY6KJ3dkoMTvcgboDq6hd1hBQKfx7",
+        "access_id": "",
+        "access_key": "",
         "deployment": "us2"
 
     }
@@ -550,10 +558,21 @@ if __name__ == '__main__':
     src = S3AuditSource(**params)
     #app = App(**params)
 
+    props ={
+        "filters": [{
+            "filterType": "Exclude",
+            "name": "test",
+            "regexp": "version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status"
+        }],
+
+        "multilineProcessingEnabled": False,
+        "useAutolineMatching": False
+    }
+
     # create
     _, collector_id = col.create(collector_type, collector_name, source_category)
     #_, source_id = src.create(collector_id, source_name, source_category)
-    _, source_id = src.create(collector_id, 's3-audit-src', source_category, 'sumologic-s3-audit', 'sumo*', 'arn:aws:iam::296516481872:role/s3-audit-2-SumoRole-VFVHMCOSB5KQ')
+    _, source_id = src.create(collector_id, 's3-audit-src', source_category, 'sumolog-s3-audit', 'sumo*', 'arn:aws:iam::296516481872:role/sumo-s3-audit', props)
 
     #_, app_folder_id = app.create('5a58719f-0f8a-4aa7-993f-9cc337a286aa', appname, source_params)
     #print(app_folder_id)
