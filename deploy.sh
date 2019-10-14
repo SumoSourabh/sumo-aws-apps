@@ -11,6 +11,8 @@ echo '1. Amazon GuardDuty Benchmark'
 echo '2. Amazon GuardDuty'
 echo '3. Amazon S3 Audit'
 echo '4. AWS WAF'
+echo '5. AWS Config'
+echo '6. AWS CloudTrail'
 
 guard_duty_benchmark()
 {
@@ -20,7 +22,7 @@ guard_duty_benchmark()
 	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
 	#sam deploy --template-file packaged.yaml --stack-name  sumologic-app-utils --capabilities CAPABILITY_IAM
 	echo Installing..........
-	cd guardduty/benchmark
+	cd ..\/guardduty/benchmark
 	rm -r .aws-sam
 	sam build -t template.yaml
 	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
@@ -180,6 +182,77 @@ waf()
 	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
 	
 }
+config()
+{
+	cd sumologic-app-utils 
+	rm -r .aws-sam
+	sam build -t sumo_app_utils.yaml
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	#sam deploy --template-file packaged.yaml --stack-name  sumologic-app-utils --capabilities CAPABILITY_IAM
+	echo Installing..........
+	cd ..\/config
+	rm -r .aws-sam
+	sam build -t template.yaml
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	echo '\n-----SumoLogic configuration------\n'
+	read -p 'CollectorName: ' collector_name
+	read -p 'SourceName; ' SourceName
+	read -p 'SourceCategoryName: ' SourceCategoryName
+	read -p 'PathExpression: ' PathExpression
+	read -p 'ExternalID (deployment:accountId. Eg. us1:0000000000000131)': ExternalID
+	read -p 'AccessLogsTargetS3BucketName: ':  AccessLogsTargetS3BucketName
+	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
+	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
+
+	sam deploy --template-file packaged.yaml --stack-name  sumologic-config-stack \
+	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
+	--parameter-overrides SumoDeployment=$sumo_deployment \
+	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
+	CollectorName=$collector_name \
+	SourceName=$SourceName \
+	SourceCategoryName=$SourceCategoryName \
+	ExternalID=$ExternalID \
+	PathExpression=$PathExpression \
+	ConfigTargetS3BucketName=$AccessLogsTargetS3BucketName \
+	CreateTargetS3Bucket=$CreateTargetS3Bucket \
+	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
+
+}
+cloudtrail(){
+	cd sumologic-app-utils 
+	rm -r .aws-sam
+	sam build -t sumo_app_utils.yaml
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	#sam deploy --template-file packaged.yaml --stack-name  sumologic-app-utils --capabilities CAPABILITY_IAM
+	echo Installing..........
+	cd ..\/cloudtrail
+	rm -r .aws-sam
+	sam build -t template.yaml
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	echo '\n-----SumoLogic configuration------\n'
+	read -p 'CollectorName: ' collector_name
+	read -p 'SourceName; ' SourceName
+	read -p 'SourceCategoryName: ' SourceCategoryName
+	read -p 'PathExpression: ' PathExpression
+	read -p 'ExternalID (deployment:accountId. Eg. us1:0000000000000131)': ExternalID
+	read -p 'AccessLogsTargetS3BucketName: ':  AccessLogsTargetS3BucketName
+	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
+	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
+
+	sam deploy --template-file packaged.yaml --stack-name  sumologic-cloudtrail-stack \
+	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
+	--parameter-overrides SumoDeployment=$sumo_deployment \
+	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
+	CollectorName=$collector_name \
+	SourceName=$SourceName \
+	SourceCategoryName=$SourceCategoryName \
+	ExternalID=$ExternalID \
+	PathExpression=$PathExpression \
+	CloudTrailTargetS3BucketName=$AccessLogsTargetS3BucketName \
+	CreateTargetS3Bucket=$CreateTargetS3Bucket \
+	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
+
+}
 while :
 do
   read INPUT_STRING
@@ -195,6 +268,12 @@ do
 		;;
 	4)
 		waf
+		;;
+	5)
+		config 
+		;;
+	6)
+		cloudtrail 
 		;;
 	bye)
 		echo "See you again!"

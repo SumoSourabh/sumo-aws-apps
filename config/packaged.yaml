@@ -1,17 +1,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: "A CloudFormation template that creates a role for authenticating with\
-  \ Sumo\u2019s AWS integrations."
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: sumo-amazon-s3-audit-app
-    Description: SumoLogic Amazon S3 Audit Application
+    Name: sumo-config
+    Description: SumoLogic AWS Config Application
     Author: user1
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: s3://sumo-ct-app-bucket/60dd855ef60687184c3b1f69ed374378
-    ReadmeUrl: s3://sumo-ct-app-bucket/f8285cccc5d34fffb8bf3f1bb6b59413
+    LicenseUrl: s3://sumo-app-utils/60dd855ef60687184c3b1f69ed374378
+    ReadmeUrl: s3://sumo-app-utils/d41d8cd98f00b204e9800998ecf8427e
     Labels:
-    - S3Audit
+    - tests
     HomePageUrl: https://github.com/user1/my-app-project
     SemanticVersion: 0.0.1
     SourceCodeUrl: https://github.com/user1/my-app-project
@@ -24,19 +22,18 @@ Metadata:
       - SumoAccessID
       - SumoAccessKey
     - Label:
-        default: Sumo Logic Collection Configuration
+        default: AWS Resources Configuration
+      Parameters:
+      - ExternalID
+      - ConfigTargetS3BucketName
+      - CreateTargetS3Bucket
+    - Label:
+        default: Collection Configuration
       Parameters:
       - CollectorName
       - SourceName
       - SourceCategoryName
-      - PathExpression
       - RemoveSumoResourcesOnDeleteStack
-    - Label:
-        default: S3 Audit Configuration
-      Parameters:
-      - ExternalID
-      - AccessLogsTargetS3BucketName
-      - CreateTargetS3Bucket
     ParameterLabels:
       SumoDeployment:
         default: Deployment Name
@@ -49,28 +46,26 @@ Metadata:
       SourceName:
         default: Source Name
       SourceCategoryName:
-        default: Source Category
+        default: Source Category Name
       PathExpression:
         default: Path Expression
       RemoveSumoResourcesOnDeleteStack:
         default: Remove Sumo Resources On Delete Stack
       ExternalID:
         default: IAM Role ExternalID
-      AccessLogsTargetS3BucketName:
+      ConfigTargetS3BucketName:
         default: Target BucketName
       CreateTargetS3Bucket:
         default: Do you want to create a target S3 bucket?
 Parameters:
   CollectorName:
     Type: String
-    Default: S3AuditCollector
+    Default: ConfigCollector
   SourceName:
     Type: String
-    Default: S3AuditEvents
+    Default: ConfigSource
   SourceCategoryName:
     Type: String
-    Description: Category metadata to use later for querying, e.g. prod/web/apache/access
-      . This data is queried using the '_sourceCategory' key name.
   SumoAccessID:
     Type: String
   SumoAccessKey:
@@ -98,9 +93,9 @@ Parameters:
     Type: String
     Description: An ID used in the trust policy to designate who can assume the role,
       formatted as deployment:accountId. Eg. us1:0000000000000131
-  AccessLogsTargetS3BucketName:
+  ConfigTargetS3BucketName:
     Type: String
-    Description: S3 access logs target buket name.
+    Description: AWS Config logs target bucket name.
   CreateTargetS3Bucket:
     Type: String
     Default: 'no'
@@ -145,37 +140,74 @@ Resources:
             - s3:ListBucket
             Resource:
             - Fn::Sub:
-              - arn:aws:s3:::${S3bucketName}
+              - arn:aws:s3:::${ConfigTargetS3BucketName}
               - S3bucketName:
-                  Ref: AccessLogsTargetS3BucketName
+                  Ref: ConfigTargetS3BucketName
             - Fn::Sub:
-              - arn:aws:s3:::${S3bucketName}/*
+              - arn:aws:s3:::${ConfigTargetS3BucketName}/*
               - S3bucketName:
-                  Ref: AccessLogsTargetS3BucketName
-  TargetS3Bucket:
-    Type: AWS::S3::Bucket
-    Condition: CreateBucket
+                  Ref: ConfigTargetS3BucketName
+  SumoAppUtils:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: https://s3.us-west-2.amazonaws.com/sumo-app-utils/18f683769028dd94941d8a7bb3797468.template
+  SumoS3Bucket:
+    DependsOn:
+    - SumoSNSpolicy
     Properties:
       BucketName:
-        Ref: AccessLogsTargetS3BucketName
+        Ref: ConfigTargetS3BucketName
       NotificationConfiguration:
         TopicConfigurations:
         - Event: s3:ObjectCreated:Put
           Topic:
-            Ref: sumoS3AuditTopic
-  sumoS3AuditTopic:
-    Type: AWS::SNS::Topic
+            Ref: SumoSNSTopic
+    Type: AWS::S3::Bucket
+  SumoSNSTopic:
     Properties:
       TopicName:
         Fn::Sub: SumoSNSTopic-${AWS::StackName}
-  sumoSNSSubscription:
+    Type: AWS::SNS::Topic
+  DeliveryChannel:
+    DependsOn:
+    - SumoS3Bucket
+    Type: AWS::Config::DeliveryChannel
+    Properties:
+      ConfigSnapshotDeliveryProperties:
+        DeliveryFrequency: One_Hour
+      S3BucketName:
+        Ref: ConfigTargetS3BucketName
+      SnsTopicARN:
+        Ref: SumoSNSTopic
+  ConfigS3BucketPolicy:
+    DependsOn:
+    - SumoS3Bucket
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: SumoS3Bucket
+      PolicyDocument:
+        Id: AWSConfigBucketDelivery
+        Statement:
+          Effect: Allow
+          Action:
+          - s3:GetBucketAcl
+          - s3:ListBucket
+          - s3:PutObject
+          Principal:
+            Service:
+            - config.amazonaws.com
+          Resource:
+          - Fn::Sub: arn:aws:s3:::${ConfigTargetS3BucketName}
+          - Fn::Sub: arn:aws:s3:::${ConfigTargetS3BucketName}/AWSLogs/*
+  SumoSNSSubscription:
     Type: AWS::SNS::Subscription
     Properties:
       TopicArn:
-        Ref: sumoS3AuditTopic
+        Ref: SumoSNSTopic
       Endpoint:
         Fn::GetAtt:
-        - SumoS3AuditSource
+        - SumoHTTPSource
         - SUMO_ENDPOINT
       Protocol: https
       DeliveryPolicy:
@@ -187,31 +219,28 @@ Resources:
           numMaxDelayRetries: 5
           numNoDelayRetries: 0
           backoffFunction: exponential
-  sumoSNSpolicy:
+  SumoSNSpolicy:
     Properties:
       PolicyDocument:
         Id: SumoTopicPolicy
         Statement:
-        - Action: sns:Publish
+        - Action:
+          - sns:Publish
           Condition:
             StringEquals:
               aws:SourceAccount:
                 Ref: AWS::AccountId
             ArnLike:
               aws:SourceArn:
-                Fn::Sub: arn:aws:s3:*:*:${AccessLogsTargetS3BucketName}
+                Fn::Sub: arn:aws:s3:::${ConfigTargetS3BucketName}
           Effect: Allow
           Principal:
             AWS: '*'
           Resource:
-            Ref: sumoS3AuditTopic
+          - Ref: SumoSNSTopic
       Topics:
-      - Ref: sumoS3AuditTopic
+      - Ref: SumoSNSTopic
     Type: AWS::SNS::TopicPolicy
-  SumoAppUtils:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: https://s3.us-west-2.amazonaws.com/sumo-ct-app-bucket/390e70119325fb4a1c0705a6d79e10a8.template
   SumoHostedCollector:
     Type: Custom::Collector
     Properties:
@@ -232,8 +261,8 @@ Resources:
         Ref: SumoAccessKey
       SumoDeployment:
         Ref: SumoDeployment
-  SumoS3AuditSource:
-    Type: Custom::S3AuditSource
+  SumoHTTPSource:
+    Type: Custom::HTTPSource
     Properties:
       ServiceToken:
         Fn::GetAtt:
@@ -257,15 +286,9 @@ Resources:
         Ref: SumoAccessKey
       SumoDeployment:
         Ref: SumoDeployment
-      TargetBucketName:
-        Ref: AccessLogsTargetS3BucketName
-      PathExpression:
-        Ref: PathExpression
-      RoleArn:
-        Fn::GetAtt:
-        - SumoRole
-        - Arn
-  SumoAmazonS3AuditApp:
+      DateFormat: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+      DateLocatorRegex: .*"updatedAt":"(.*)".*
+  SumoConfigApp:
     Type: Custom::App
     Properties:
       ServiceToken:
@@ -274,12 +297,12 @@ Resources:
         - Outputs.SumoAppUtilsFunction
       Region:
         Ref: AWS::Region
-      AppName: Amazon S3 Audit
-      AppId: cf3ba421-d959-4b08-9ae8-5bd4202eea87
+      AppName: AWS Config
+      AppId: 61be4a8f-6702-4035-bc55-e56d149b181d
       RemoveOnDeleteStack:
         Ref: RemoveSumoResourcesOnDeleteStack
       AppSources:
-        paramId123:
+        logsrc:
           Fn::Sub: _sourceCategory=${SourceCategoryName}
       SumoAccessID:
         Ref: SumoAccessID
@@ -287,16 +310,3 @@ Resources:
         Ref: SumoAccessKey
       SumoDeployment:
         Ref: SumoDeployment
-Outputs:
-  SumoRoleArn:
-    Description: ARN of the cretaed Role.
-    Value:
-      Fn::GetAtt:
-      - SumoRole
-      - Arn
-  SumoEndpoint:
-    Description: SNS Subscription Endpoint
-    Value:
-      Fn::GetAtt:
-      - SumoS3AuditSource
-      - SUMO_ENDPOINT
