@@ -13,6 +13,7 @@ echo '3. Amazon S3 Audit'
 echo '4. AWS WAF'
 echo '5. AWS Config'
 echo '6. AWS CloudTrail'
+echo '7. Amazon VPC Flow Logs'
 
 guard_duty_benchmark()
 {
@@ -72,7 +73,7 @@ guard_duty()
 	
 }
 
-s3_audit()
+vpc_flow_logs()
 {
   	cd sumologic-app-utils 
 	rm -r .aws-sam
@@ -80,7 +81,7 @@ s3_audit()
 	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
 	#sam deploy --template-file packaged.yaml --stack-name  sumologic-app-utils --capabilities CAPABILITY_IAM
 	echo Installing..........
-	cd ..\/s3-audit
+	cd ..\/vpc-flow-logs
 	rm -r .aws-sam
 	sam build -t template.yaml
 	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
@@ -89,11 +90,12 @@ s3_audit()
 	read -p 'SourceCategoryName: ' SourceCategoryName
 	read -p 'PathExpression: ' PathExpression
 	read -p 'ExternalID (deployment:accountId. Eg. us1:0000000000000131)': ExternalID
-	read -p 'AccessLogsTargetS3BucketName: ':  AccessLogsTargetS3BucketName
+	read -p 'LogsTargetS3BucketName: ' LogsTargetS3BucketName
 	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
+	read -p 'Amazon VPC Flow Logs App SourceCategoryName: ' VPCFlowLogAppSourceCategoryName
 	
-	sam deploy --template-file packaged.yaml --stack-name  sumologic-s3-audit \
+	sam deploy --template-file packaged.yaml --stack-name  sumologic-vpc-flow-logs \
 	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 	--parameter-overrides SumoDeployment=$sumo_deployment \
 	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
@@ -102,8 +104,9 @@ s3_audit()
 	SourceCategoryName=$SourceCategoryName \
 	ExternalID=$ExternalID \
 	PathExpression=$PathExpression \
-	AccessLogsTargetS3BucketName=$AccessLogsTargetS3BucketName \
+	LogsTargetS3BucketName=$LogsTargetS3BucketName \
 	CreateTargetS3Bucket=$CreateTargetS3Bucket \
+	VPCFlowLogAppSourceCategoryName=$VPCFlowLogAppSourceCategoryName \
 	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
 	
 }
@@ -274,6 +277,9 @@ do
 		;;
 	6)
 		cloudtrail 
+		;;
+	7)
+		vpc_flow_logs 
 		;;
 	bye)
 		echo "See you again!"

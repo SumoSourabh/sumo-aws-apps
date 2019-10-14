@@ -1,0 +1,322 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: "A CloudFormation template that creates a role for authenticating with\
+  \ Sumo\u2019s AWS integrations."
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: sumo-amazon-vpc-flowlogs-app
+    Description: SumoLogic Amazon Amazon VPC Flow Logs Application
+    Author: user1
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: s3://sumologic-sam-app/60dd855ef60687184c3b1f69ed374378
+    ReadmeUrl: s3://sumologic-sam-app/d41d8cd98f00b204e9800998ecf8427e
+    Labels:
+    - vpcFlowLogs
+    HomePageUrl: https://github.com/user1/my-app-project
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/user1/my-app-project
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Sumo Logic Deployment Configuration
+      Parameters:
+      - SumoDeployment
+      - SumoAccessID
+      - SumoAccessKey
+      - RemoveSumoResourcesOnDeleteStack
+    - Label:
+        default: Sumo Logic Collector/Source/App Configuration
+      Parameters:
+      - CollectorName
+      - SourceName
+      - LogsTargetS3BucketName
+      - CreateTargetS3Bucket
+      - SourceCategoryName
+      - PathExpression
+      - ExternalID
+      - ExcludeRuleName
+      - ExcludeRule
+      - VPCFlowLogAppSourceCategoryName
+    ParameterLabels:
+      SumoDeployment:
+        default: Deployment Name
+      SumoAccessID:
+        default: Access ID
+      SumoAccessKey:
+        default: Access Key
+      CollectorName:
+        default: Collector Name
+      SourceName:
+        default: Source Name
+      SourceCategoryName:
+        default: Source Category
+      PathExpression:
+        default: Path Expression
+      RemoveSumoResourcesOnDeleteStack:
+        default: Remove Sumo Resources On Delete Stack
+      ExternalID:
+        default: IAM Role ExternalID
+      LogsTargetS3BucketName:
+        default: Target BucketName
+      CreateTargetS3Bucket:
+        default: Do you want to create a target S3 bucket?
+      VPCFlowLogAppSourceCategoryName:
+        default: Amazon VPC Flow Logs App SourceCategoryName
+Parameters:
+  CollectorName:
+    Type: String
+    Default: VPCFlowLogCollector
+  SourceName:
+    Type: String
+    Default: VPCFlowLogEvents
+  SourceCategoryName:
+    Type: String
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access
+      . This data is queried using the '_sourceCategory' key name.
+  SumoAccessID:
+    Type: String
+  SumoAccessKey:
+    Type: String
+  SumoDeployment:
+    Type: String
+    AllowedValues:
+    - au
+    - ca
+    - de
+    - eu
+    - jp
+    - us2
+    - us1
+    Description: Enter au, ca, de, eu, jp, us2, or us1
+  RemoveSumoResourcesOnDeleteStack:
+    AllowedValues:
+    - true
+    - false
+    Default: false
+    Description: To delete collector, sources and app when stack is deleted, set this
+      parameter to true. Default is false.
+    Type: String
+  ExternalID:
+    Type: String
+    Description: An ID used in the trust policy to designate who can assume the role,
+      formatted as deployment:accountId. Eg. us1:0000000000000131
+  LogsTargetS3BucketName:
+    Type: String
+    Description: S3 access logs target buket name.
+  CreateTargetS3Bucket:
+    Type: String
+    Default: 'no'
+    AllowedValues:
+    - 'yes'
+    - 'no'
+  PathExpression:
+    Type: String
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log
+      or ABC.log
+  ExcludeRuleName:
+    Type: String
+    Default: Exclude VPC File Flow headers
+  ExcludeRule:
+    Type: String
+    Description: Exclude rule regexp
+    Default: version account-id interface-id srcaddr dstaddr srcport dstport protocol
+      packets bytes start end action log-status
+  VPCFlowLogAppSourceCategoryName:
+    Type: String
+Conditions:
+  CreateBucket:
+    Fn::Equals:
+    - Ref: CreateTargetS3Bucket
+    - 'yes'
+Resources:
+  SumoRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: arn:aws:iam::926226587429:root
+          Action: sts:AssumeRole
+          Condition:
+            StringEquals:
+              sts:ExternalId:
+                Ref: ExternalID
+      Path: /
+      Policies:
+      - PolicyName: SumoPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:GetObject
+            - s3:GetObjectVersion
+            - s3:ListBucketVersions
+            - s3:ListBucket
+            Resource:
+            - Fn::Sub:
+              - arn:aws:s3:::${S3bucketName}
+              - S3bucketName:
+                  Ref: LogsTargetS3BucketName
+            - Fn::Sub:
+              - arn:aws:s3:::${S3bucketName}/*
+              - S3bucketName:
+                  Ref: LogsTargetS3BucketName
+  TargetS3Bucket:
+    Type: AWS::S3::Bucket
+    Condition: CreateBucket
+    Properties:
+      BucketName:
+        Ref: LogsTargetS3BucketName
+      NotificationConfiguration:
+        TopicConfigurations:
+        - Event: s3:ObjectCreated:Put
+          Topic:
+            Ref: sumoS3SorceTopic
+  sumoS3SorceTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName:
+        Fn::Sub: SumoSNSTopic-${AWS::StackName}
+  sumoSNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn:
+        Ref: sumoS3SorceTopic
+      Endpoint:
+        Fn::GetAtt:
+        - SumoS3Source
+        - SUMO_ENDPOINT
+      Protocol: https
+      DeliveryPolicy:
+        healthyRetryPolicy:
+          numRetries: 40
+          minDelayTarget: 10
+          maxDelayTarget: 300
+          numMinDelayRetries: 3
+          numMaxDelayRetries: 5
+          numNoDelayRetries: 0
+          backoffFunction: exponential
+  sumoSNSpolicy:
+    Properties:
+      PolicyDocument:
+        Id: SumoTopicPolicy
+        Statement:
+        - Action: sns:Publish
+          Condition:
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
+            ArnLike:
+              aws:SourceArn:
+                Fn::Sub: arn:aws:s3:*:*:${LogsTargetS3BucketName}
+          Effect: Allow
+          Principal:
+            AWS: '*'
+          Resource:
+            Ref: sumoS3SorceTopic
+      Topics:
+      - Ref: sumoS3SorceTopic
+    Type: AWS::SNS::TopicPolicy
+  SumoAppUtils:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: https://s3.us-west-2.amazonaws.com/sumologic-sam-app/f3d0a4d42e8f169740a8f5ec7d5419f8.template
+  SumoHostedCollector:
+    Type: Custom::Collector
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Outputs.SumoAppUtilsFunction
+      Region:
+        Ref: AWS::Region
+      CollectorType: Hosted
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      CollectorName:
+        Ref: CollectorName
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+  SumoS3Source:
+    Type: Custom::S3Source
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Outputs.SumoAppUtilsFunction
+      Region:
+        Ref: AWS::Region
+      SourceName:
+        Ref: SourceName
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      SourceCategory:
+        Ref: SourceCategoryName
+      CollectorId:
+        Fn::GetAtt:
+        - SumoHostedCollector
+        - COLLECTOR_ID
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+      TargetBucketName:
+        Ref: LogsTargetS3BucketName
+      PathExpression:
+        Ref: PathExpression
+      filters:
+      - filterType: Exclude
+        name:
+          Ref: ExcludeRuleName
+        regexp:
+          Ref: ExcludeRule
+      RoleArn:
+        Fn::GetAtt:
+        - SumoRole
+        - Arn
+      multilineProessing: false
+      autolineMatching": false
+  SumoAmazonVPCFlowLogAApp:
+    Type: Custom::App
+    Properties:
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Outputs.SumoAppUtilsFunction
+      Region:
+        Ref: AWS::Region
+      AppName: Amazon VPC Flow Logs
+      AppId: 3546d789-3a45-48df-ac85-6838044d988d
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      AppSources:
+        vpcFlowLogs:
+          Fn::Sub: _sourceCategory=${VPCFlowLogAppSourceCategoryName}
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+Outputs:
+  SumoRoleArn:
+    Description: ARN of the cretaed Role.
+    Value:
+      Fn::GetAtt:
+      - SumoRole
+      - Arn
+  SumoEndpoint:
+    Description: SNS Subscription Endpoint
+    Value:
+      Fn::GetAtt:
+      - SumoS3Source
+      - SUMO_ENDPOINT
