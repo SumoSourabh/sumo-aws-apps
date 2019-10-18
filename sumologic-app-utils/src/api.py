@@ -192,7 +192,11 @@ class S3SourceBase(Resource):
         }
 
         if 'filters' in props :
-            params['filters'] = props.get('filters')
+            filters = props.get('filters')
+            if isinstance(filters, list):
+                filters[:] = [x for x in filters if x['regexp'].strip()]
+                if filters:
+                    params['filters'] = filters
         if 'multilineProcessingEnabled' in props :
             params['multilineProcessingEnabled'] = props.get('multilineProcessingEnabled')
         if 'useAutolineMatching' in props:
