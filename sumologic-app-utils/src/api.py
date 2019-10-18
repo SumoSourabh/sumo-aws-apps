@@ -162,6 +162,86 @@ class Collector(Resource):
             "collector_id": collector_id
         }
 
+class Connections(Resource):
+
+    def create(self, type, name, description, url, username, password, region, service_name, webhook_type, *args, **kwargs):
+        connection_id = None
+        connection = {
+                'type': type,
+                'name': name,
+                'description': description,
+                'headers': [
+                    {
+                        'name': 'accessKey',
+                        'value': username
+                    },
+                    {
+                        'name': 'secretKey',
+                        'value': password
+                    },
+                    {
+                        'name': 'awsRegion',
+                        'value': region
+                    },
+                    {
+                        'name': 'serviceName',
+                        'value': service_name
+                    }
+                ],
+                'defaultPayload': '{"Types":"HIPAA Controls","Description":"This search","GeneratorID":"InsertFindingsScheduledSearch","Severity":30,"SourceUrl":"https://service.sumologic.com/ui/#/search/RmC8kAUGZbXrkj2rOFmUxmHtzINUgfJnFplh3QWY","ComplianceStatus":"FAILED","Rows":"[{\\"Timeslice\\":1542719060000,\\"finding_time\\":\\"1542719060000\\",\\"item_name\\":\\"A nice dashboard.png\\",\\"title\\":\\"Vulnerability\\",\\"resource_id\\":\\"10.178.11.43\\",\\"resource_type\\":\\"Other\\"}]"}',
+                'url': url,
+                'webhookType': webhook_type
+        }
+        try:
+            resp = self.sumologic_cli.create_connection(connection, headers=None)
+            connection_id = json.loads(resp.text)['id']
+            print("created connectionId %s" % connection_id)
+        except Exception as e:
+            print(e.response.json())
+            if hasattr(e, 'response'):
+                errors =  e.response.json()["errors"]
+                for error in errors:
+                    if error.get('code') == 'connection:name_already_exists':
+                        connection_id = e.response.json().get('id')
+                        print('Connection already exist', connection_id)
+            else:
+                raise
+
+        return {"CONNECTION_ID": connection_id}, connection_id
+
+    def update(self, connection_id, type, url, description, username, password, *args, **kwargs):
+        cv, etag = self.sumologic_cli.connection(connection_id)
+        cv['type'] = type
+        cv['url'] = url
+        cv['description'] = description
+        cv['username'] = username
+        cv['password'] = password
+        resp = self.sumologic_cli.update_collector(cv, etag)
+        connection_id = json.loads(resp.text)['connections']['id']
+        print("updated connections %s" % connection_id)
+        return {"CONNECTION_ID": connection_id}, connection_id
+
+    def delete(self, connection_id, remove_on_delete_stack, *args, **kwargs):
+        if remove_on_delete_stack:
+            response = self.sumologic_cli.delete_connection(connection_id, 'WebhookConnection')
+            print("deleted connection %s" % (connection_id, response.text))
+        else:
+            print("skipping connection deletion")
+
+    def extract_params(self, event):
+        props = event.get("ResourceProperties")
+        if event.get('PhysicalResourceId'):
+            _, connection_id = event['PhysicalResourceId'].split("/")
+        return {
+            "type": props.get("Type"),
+            "name": props.get("Name"),
+            "description": props.get("Description"),
+            "url": props.get("URL"),
+            "username": props.get("UserName"),
+            "password": props.get("Password"),
+            "id": props.get("ConnectionId"),
+            "connection_id": props.get('connection_id')
+        }
 
 class S3SourceBase(Resource):
     def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, source_type, props, *args, **kwargs):

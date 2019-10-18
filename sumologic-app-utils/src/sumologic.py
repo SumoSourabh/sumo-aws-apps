@@ -103,6 +103,21 @@ class SumoLogic(object):
     def delete_search_job(self, search_job):
         return self.delete('/search/jobs/' + str(search_job['id']))
 
+    def connection(self, connection_id):
+        r = self.get('/connections/' + str(connection_id))
+        return json.loads(r.text), r.headers['etag']
+
+    def create_connection(self, connection, headers=None):
+        return self.post('/connections', connection, headers)
+
+    def update_connection(self, connection, etag):
+        headers = {'If-Match': etag}
+        return self.put('/connections/' + str(connection['connection']['id']), connection, headers)
+
+    def delete_connection(self, connection_id, type):
+        return self.delete('/connections/' + connection_id + '?type='+ type)
+        
+
     def collectors(self, limit=None, offset=None, filter_type=None):
         params = {'limit': limit, 'offset': offset}
         if filter_type:
