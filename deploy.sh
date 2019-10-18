@@ -14,6 +14,7 @@ echo '4. AWS WAF'
 echo '5. AWS Config'
 echo '6. AWS CloudTrail'
 echo '7. Amazon VPC Flow Logs'
+echo '8. CIS AWS Foundations Benchmark'
 
 guard_duty_benchmark()
 {
@@ -221,7 +222,8 @@ config()
 	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
 
 }
-cloudtrail(){
+cloudtrail()
+{
 	cd sumologic-app-utils 
 	rm -r .aws-sam
 	sam build -t sumo_app_utils.yaml
@@ -256,6 +258,42 @@ cloudtrail(){
 	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
 
 }
+cis_foundations()
+{
+	cd sumologic-app-utils 
+	rm -r .aws-sam
+	sam build -t sumo_app_utils.yaml
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	#sam deploy --template-file packaged.yaml --stack-name  sumologic-app-utils --capabilities CAPABILITY_IAM
+	echo Installing..........
+	cd ..\/CIS-Foundations
+	rm -r .aws-sam
+	sam build -t template.yaml
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	echo '\n-----SumoLogic configuration------\n'
+	read -p 'CollectorName: ' collector_name
+	read -p 'SourceName; ' SourceName
+	read -p 'SourceCategoryName: ' SourceCategoryName
+	read -p 'PathExpression: ' PathExpression
+	read -p 'ExternalID (deployment:accountId. Eg. us1:0000000000000131)': ExternalID
+	read -p 'AccessLogsTargetS3BucketName: ': AccessLogsTargetS3BucketName
+	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
+	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
+
+	sam deploy --template-file packaged.yaml --stack-name  sumologic-cis-foundations-stack \
+	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
+	--parameter-overrides SumoDeployment=$sumo_deployment \
+	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
+	CollectorName=$collector_name \
+	SourceName=$SourceName \
+	SourceCategoryName=$SourceCategoryName \
+	ExternalID=$ExternalID \
+	PathExpression=$PathExpression \
+	CISTargetS3BucketName=$AccessLogsTargetS3BucketName \
+	CreateTargetS3Bucket=$CreateTargetS3Bucket \
+	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
+
+}
 while :
 do
   read INPUT_STRING
@@ -280,6 +318,9 @@ do
 		;;
 	7)
 		vpc_flow_logs 
+		;;
+	8) 
+		cis_foundations
 		;;
 	bye)
 		echo "See you again!"
