@@ -133,9 +133,19 @@ Parameters:
   ExcludeRule:
     Type: String
     Description: Exclude rule regexp
+  SumoSourceType:
+    Type: String
+    Default: S3Source
+    AllowedValues:
+      - S3Source
+      - S3AuditSource
+      - AwsCloudTrail
     
 Conditions:
   CreateBucket: !Equals [ !Ref CreateTargetS3Bucket, "yes" ]
+  CreateAwsCloudTrail: !Equals [ !Ref SumoSourceType, "AwsCloudTrail" ]
+  CreateS3Audit: !Equals [ !Ref SumoSourceType, "S3AuditSource" ]
+  CreateS3Source: !Equals [ !Ref SumoSourceType, "S3Source" ]
   
     
 
@@ -196,7 +206,7 @@ Resources:
     Properties:
       TopicArn: 
         Ref: sumoS3SorceTopic
-      Endpoint: !GetAtt SumoS3Source.SUMO_ENDPOINT
+      Endpoint: !If [CreateAwsCloudTrail, !GetAtt SumoAwsCloudTrailSource.SUMO_ENDPOINT ,!GetAtt SumoS3Source.SUMO_ENDPOINT]
       Protocol: https
       DeliveryPolicy:
        healthyRetryPolicy:
@@ -254,6 +264,7 @@ Resources:
 
   SumoS3Source:
     Type: Custom::S3Source
+    Condition: CreateS3Source
     Properties:
       ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
@@ -275,6 +286,24 @@ Resources:
       multilineProcessingEnabled: !Ref MultilineProcessingEnabled
       useAutolineMatching: !Ref MultilineProcessingEnabled
 
+  SumoAwsCloudTrailSource:
+    Type: Custom::AwsCloudTrail
+    Condition: CreateAwsCloudTrail
+    Properties:
+      ServiceToken: !GetAtt SumoAppUtils.Arn
+      Region: !Ref "AWS::Region"
+      SourceName: !Ref SourceName
+      RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
+      SourceCategory: !Ref SourceCategory
+      CollectorId: !GetAtt SumoHostedCollector.COLLECTOR_ID
+      SumoAccessID: !Ref SumoAccessID
+      SumoAccessKey: !Ref SumoAccessKey
+      SumoDeployment: !Ref SumoDeployment
+      TargetBucketName: !Ref LogsTargetS3BucketName
+      PathExpression: !Ref PathExpression
+      RoleArn: !GetAtt SumoRole.Arn
+      
+
 Outputs:
   SumoRoleArn:
     Description: ARN of the cretaed Role.
@@ -282,7 +311,7 @@ Outputs:
 
   SumoEndpoint:
     Description: SNS Subscription Endpoint
-    Value: !GetAtt SumoS3Source.SUMO_ENDPOINT
+    Value: !If [CreateAwsCloudTrail, !GetAtt SumoAwsCloudTrailSource.SUMO_ENDPOINT ,!GetAtt SumoS3Source.SUMO_ENDPOINT]
 
   SumoAppUtilsArn:
     Description: SNS Subscription Endpoint

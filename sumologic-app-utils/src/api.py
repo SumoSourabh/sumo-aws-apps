@@ -346,7 +346,10 @@ class S3Source(S3SourceBase):
         return super().create(collector_id, source_name, source_category,
                               bucket_name, path_expression, role_arn, 'AwsS3Bucket', props, *args, **kwargs)
 
-
+class AwsCloudTrail(S3SourceBase):
+    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, props, *args, **kwargs):
+        return super().create(collector_id, source_name, source_category,
+                              bucket_name, path_expression, role_arn, 'AwsCloudTrailBucket', props, *args, **kwargs)
 
 class HTTPSource(Resource):
 

@@ -16,6 +16,7 @@ echo '6. AWS CloudTrail'
 echo '7. Amazon VPC Flow Logs'
 echo '8. CIS AWS Foundations Benchmark'
 echo '9. PCI Compliance for Amazon VPC Flow Logs'
+echo '10. PCI Compliance for AWS Cloud Trail App'
 
 guard_duty_benchmark()
 {
@@ -350,6 +351,61 @@ pci_compliance_vpc_flow()
 	cd ..
 	
 }
+
+pci_compliance_cloudtrail()
+{
+  	cd sumo-s3-source-utils 
+	rm -r .aws-sam
+	sam build -t template.yaml
+	file_name=sumo-s3-source-utils-$(date "+%Y-%m-%d-%H-%M-%S").yaml
+	region=$(aws configure get region)
+	template_url=https://s3.$region.amazonaws.com/$sam_s3_bucket/$file_name
+	
+	echo $file_name
+	echo $template_url
+	sam package --output-template $file_name --s3-bucket $sam_s3_bucket
+	echo uploading the s3 source utils to s3...
+	aws s3 cp $file_name s3://$sam_s3_bucket
+	#sam deploy --template-file packaged.yaml --stack-name  sumologic-app-utils --capabilities CAPABILITY_IAM
+	echo Installing..........
+	cd ..\/pci-compliance-cloudttrial-app
+	rm -r .aws-sam
+	sam build -t template.yaml --parameter-overrides 'ParameterKey=S3SourceUtilTempalteS3Url,ParameterValue=$template_url'
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	echo '\n-----SumoLogic configuration------\n'
+	read -p 'CollectorName: ' collector_name
+	read -p 'SourceName; ' SourceName
+	read -p 'SourceCategory: ' SourceCategory
+	read -p 'PathExpression: ' PathExpression
+	read -p 'ExternalID (deployment:accountId. Eg. us1:0000000000000131)': ExternalID
+	read -p 'PCICloudTrailAppSourceCategory': PCICloudTrailAppSourceCategory
+	echo '\n-----Amazon Configuration------\n'
+	read -p 'LogsTargetS3BucketName: ':  LogsTargetS3BucketName
+	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
+	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
+	
+	
+	stack_name=sumo-pci-compliance-for-cloudtrail-app-$(date "+%Y-%m-%d-%H-%M-%S")
+	
+	sam deploy --template-file packaged.yaml --stack-name  $stack_name \
+	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
+	--parameter-overrides SumoDeployment=$sumo_deployment \
+	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
+	CollectorName=$collector_name \
+	SourceName=$SourceName \
+	SourceCategory=$SourceCategory \
+	ExternalID=$ExternalID \
+	PathExpression=$PathExpression \
+	LogsTargetS3BucketName=$LogsTargetS3BucketName \
+	CreateTargetS3Bucket=$CreateTargetS3Bucket \
+	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
+	PCICloudTrailAppSourceCategory=$PCICloudTrailAppSourceCategory \
+	S3SourceUtilTempalteS3Url=$template_url \
+	
+
+	cd ..
+	
+}
 while :
 do
   read INPUT_STRING
@@ -380,6 +436,9 @@ do
 		;;
 	9) 
 		pci_compliance_vpc_flow
+		;;
+	10) 
+		pci_compliance_cloudtrail
 		;;
 	bye)
 		echo "See you again!"
