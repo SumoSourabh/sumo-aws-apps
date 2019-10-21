@@ -17,6 +17,7 @@ echo '7. Amazon VPC Flow Logs'
 echo '8. CIS AWS Foundations Benchmark'
 echo '9. PCI Compliance for Amazon VPC Flow Logs'
 echo '10. PCI Compliance for AWS Cloud Trail App'
+echo '11. Security Hub'
 
 guard_duty_benchmark()
 {
@@ -406,6 +407,41 @@ pci_compliance_cloudtrail()
 	cd ..
 	
 }
+security_hub()
+{
+  	cd security-hub
+	rm -r .aws-sam
+	sam build -t template.yaml
+	
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	
+	echo '\n-----SumoLogic configuration------\n'
+	read -p 'EnableSecurityHub ("Yes"/"No"): ' EnableSecurityHub
+	read -p 'CollectorName: ' collector_name
+	read -p 'ConnectionName; ' ConnectionName
+	read -p 'SourceCategory: ' SourceCategory
+	
+	echo '\n-----Amazon Configuration------\n'
+	read -p 'LogsTargetS3BucketName: ':  LogsTargetS3BucketName
+	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
+	
+	
+	stack_name=sumo-security-hub-$(date "+%Y-%m-%d-%H-%M-%S")
+	
+	sam deploy --template-file packaged.yaml --stack-name  $stack_name \
+	--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+	--parameter-overrides SumoDeployment=$sumo_deployment \
+	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
+	CollectorName=$collector_name \
+	ConnectionName=$ConnectionName \
+	SourceCategoryName=$SourceCategory \
+	EnableSecurityHub=$EnableSecurityHub \
+	S3BucketName=$LogsTargetS3BucketName \
+	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
+
+	cd ..
+	
+}
 while :
 do
   read INPUT_STRING
@@ -439,6 +475,9 @@ do
 		;;
 	10) 
 		pci_compliance_cloudtrail
+		;;
+	11) 
+		security_hub
 		;;
 	bye)
 		echo "See you again!"

@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Serverless Specification template describing your function.
+
+Parameters:
+  EnableSecurityHub:
+    Type: String
+    Default: "No"
+    AllowedValues: ["Yes", "No"]
+  S3BucketName:
+    Type: String
+
+Conditions:
+  EnableSecurityHub: !Equals [ !Ref EnableSecurityHub, "Yes" ]
+
+Resources:
+  SecurityHubForwarder:
+    Type: 'AWS::Serverless::Application'
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-securityhub-forwarder
+        SemanticVersion: 1.0.7
+  SecurityHubCollector:
+    Type: 'AWS::Serverless::Application'
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-securityhub-collector
+        SemanticVersion: 1.0.8
+      Parameters:
+        S3SourceBucketName: !Ref S3BucketName
+  SecurityHubUserKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName:
+        Ref: SecurityHubUser
+  SecurityHubUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: SecurityHubUser
+      Policies:
+        - PolicyName: apigatewayaccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: execute-api:Invoke
+                Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*/*/POST/findings
+  SecurityHubConfiguration:
+    Type: AWS::SecurityHub::Hub
+    Condition: EnableSecurityHub
+
+    SumoAppUtils:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: main.handler
+      Runtime: python3.7
+      CodeUri: "..\/sumologic-app-utils/src/"
+      MemorySize: 128
+      Timeout: 300
+
+    SumoHostedCollector:
+      Type: Custom::Collector
+      Properties:
+        ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+        Region: !Ref "AWS::Region"
+        CollectorType: Hosted
+        RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
+        CollectorName: !Ref CollectorName
+        SumoAccessID: !Ref SumoAccessID
+        SumoAccessKey: !Ref SumoAccessKey
+        SumoDeployment: !Ref SumoDeployment
+
+    Connections:
+      Type: Custom::Connections
+      Properties:
+        Type: "WebhookDefinition"
+        Name: !GetAtt ConnectionName
+        Description: "Webhook Lambda connection for SecurityHub"
+        URL: !GetAtt SecurityHubForwarder.Outputs.SecurityHubForwarderApiUrl
+        UserName: !GetAtt AccessKeyForSecurityHubUser
+        Password: !GetAtt SecretKeyForSecurityHubUser
+        Region: !Ref "AWS::Region"
+        ServiceName: 'execute-api'
+        WebhookType: 'AWSLambda'
+        SumoAccessID: !Ref SumoAccessID
+        SumoAccessKey: !Ref SumoAccessKey
+        SumoDeployment: !Ref SumoDeployment
+
+    SumoAWSSecurityHubApp:
+      Type: Custom::App
+      Properties:
+        ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+        Region: !Ref "AWS::Region"
+        AppName: "AWS Security Hub"
+        AppId: "246cf87b-99b6-47cb-bde0-3fe1cb76c6b4"
+        RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
+        AppSources:
+          findingSrc: !Sub "_sourceCategory=${SourceCategoryName}"
+        SumoAccessID: !Ref SumoAccessID
+        SumoAccessKey: !Ref SumoAccessKey
+        SumoDeployment: !Ref SumoDeployment
+
+Outputs:
+  AccessKeyForSecurityHubUser:
+    Description: Access Key of User
+    Value:
+      Ref: SecurityHubUserKey
+  SecretKeyForSecurityHubUser:
+    Description: Security Access Key of User
+    Value:
+      Fn::GetAtt:
+        - SecurityHubUserKey
+        - SecretAccessKey
+  SecurityHubArn:
+    Condition: EnableSecurityHub
+    Value:
+      Ref: SecurityHubConfiguration
