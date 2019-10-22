@@ -7,6 +7,9 @@ echo 'Enter the Sumlogic access details'
 echo 'Please enter the app number to publish(1/2....):'
 echo '1. Amazon GuardDuty Benchmark'
 echo '2. Amazon GuardDuty'
+echo '3. AWS CloudTrail'
+echo '4. AWS Config'
+echo '5. CIS AWS Foundations Benchmark'
 
 
 guard_duty_benchmark()
@@ -43,6 +46,54 @@ guard_duty()
 	echo Done, Please Check your AWS serverless Repo.
 	
 }
+cloudtrail()
+{
+  	echo Installing..........
+	cd .\/cloudtrail
+	rm requirements.txt
+	cp ..\/sumologic-app-utils/src/requirements.txt .
+	rm -r .aws-sam
+	sam build -t template.yaml
+	echo Build completed..........
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	echo Package completed..........
+	echo Publishing..........
+	sam publish --template packaged.yaml
+	echo Done, Please Check your AWS serverless Repo.
+	
+}
+config()
+{
+  	echo Installing..........
+	cd .\/config
+	rm requirements.txt
+	cp ..\/sumologic-app-utils/src/requirements.txt .
+	rm -r .aws-sam
+	sam build -t template.yaml
+	echo Build completed..........
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	echo Package completed..........
+	echo Publishing..........
+	sam publish --template packaged.yaml
+	echo Done, Please Check your AWS serverless Repo.
+	
+}
+cis_foundations()
+{
+  	echo Installing..........
+	cd .\/CIS-Foundations
+	rm requirements.txt
+	cp ..\/sumologic-app-utils/src/requirements.txt .
+	rm -r .aws-sam
+	sam build -t template.yaml
+	echo Build completed..........
+	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
+	echo Package completed..........
+	echo Publishing..........
+	sam publish --template packaged.yaml
+	echo Done, Please Check your AWS serverless Repo.
+	
+}
 
 
 while :
@@ -54,6 +105,15 @@ do
 		;;
 	2)
 		guard_duty
+		;;
+	3)
+		cloudtrail
+		;;
+	4)
+		config
+		;;
+	5)
+		cis_foundations
 		;;
 	 
 	bye)

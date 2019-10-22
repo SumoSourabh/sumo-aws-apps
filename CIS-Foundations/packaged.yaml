@@ -149,9 +149,13 @@ Resources:
               - S3bucketName:
                   Ref: CISTargetS3BucketName
   SumoAppUtils:
-    Type: AWS::Serverless::Application
+    Type: AWS::Serverless::Function
     Properties:
-      Location: https://s3.us-west-2.amazonaws.com/sumo-app-utils/6cd33974796f3044ebc7ff0cb8d77208.template
+      Handler: main.handler
+      Runtime: python3.7
+      CodeUri: s3://sumo-app-utils/483344d26288d10d758c7ac0c924136e
+      MemorySize: 128
+      Timeout: 300
   TargetS3Bucket:
     Type: AWS::S3::Bucket
     Condition: CreateBucket
@@ -252,7 +256,7 @@ Resources:
       ServiceToken:
         Fn::GetAtt:
         - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
+        - Arn
       Region:
         Ref: AWS::Region
       CollectorType: Hosted
@@ -274,7 +278,7 @@ Resources:
       ServiceToken:
         Fn::GetAtt:
         - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
+        - Arn
       Region:
         Ref: AWS::Region
       SourceName:
@@ -307,7 +311,7 @@ Resources:
       ServiceToken:
         Fn::GetAtt:
         - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
+        - Arn
       Region:
         Ref: AWS::Region
       AppName: CIS AWS Foundations Benchmark

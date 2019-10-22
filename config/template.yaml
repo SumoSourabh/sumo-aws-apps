@@ -148,9 +148,13 @@ Resources:
                 - { S3bucketName: !Ref ConfigTargetS3BucketName  }
 
   SumoAppUtils:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: "..\/sumologic-app-utils/packaged.yaml"
+      Type: AWS::Serverless::Function
+      Properties:
+        Handler: main.handler
+        Runtime: python3.7
+        CodeUri: "..\/sumologic-app-utils/src/"
+        MemorySize: 128
+        Timeout: 300
 
   SumoS3Bucket:
       DependsOn:
@@ -246,7 +250,7 @@ Resources:
   SumoHostedCollector:
     Type: Custom::Collector
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       CollectorType: Hosted
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -258,7 +262,7 @@ Resources:
   SumoHTTPSource:
     Type: Custom::HTTPSource
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       SourceName: !Ref SourceName
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -273,7 +277,7 @@ Resources:
   SumoConfigApp:
     Type: Custom::App
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       AppName: "AWS Config"
       AppId: "61be4a8f-6702-4035-bc55-e56d149b181d"

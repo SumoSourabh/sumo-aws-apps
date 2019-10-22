@@ -66,6 +66,7 @@ Parameters:
     Default: ConfigSource
   SourceCategoryName:
     Type: String
+    Default: AWS/Labs/Config
   SumoAccessID:
     Type: String
   SumoAccessKey:
@@ -148,9 +149,13 @@ Resources:
               - S3bucketName:
                   Ref: ConfigTargetS3BucketName
   SumoAppUtils:
-    Type: AWS::Serverless::Application
+    Type: AWS::Serverless::Function
     Properties:
-      Location: https://s3.us-west-2.amazonaws.com/sumo-app-utils/18f683769028dd94941d8a7bb3797468.template
+      Handler: main.handler
+      Runtime: python3.7
+      CodeUri: s3://sumo-app-utils/d62d4c7e4411d98f4a4daba9fb672065
+      MemorySize: 128
+      Timeout: 300
   SumoS3Bucket:
     DependsOn:
     - SumoSNSpolicy
@@ -247,7 +252,7 @@ Resources:
       ServiceToken:
         Fn::GetAtt:
         - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
+        - Arn
       Region:
         Ref: AWS::Region
       CollectorType: Hosted
@@ -267,7 +272,7 @@ Resources:
       ServiceToken:
         Fn::GetAtt:
         - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
+        - Arn
       Region:
         Ref: AWS::Region
       SourceName:
@@ -294,7 +299,7 @@ Resources:
       ServiceToken:
         Fn::GetAtt:
         - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
+        - Arn
       Region:
         Ref: AWS::Region
       AppName: AWS Config

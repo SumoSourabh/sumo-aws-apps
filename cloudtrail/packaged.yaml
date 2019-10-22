@@ -149,9 +149,13 @@ Resources:
               - S3bucketName:
                   Ref: CloudTrailTargetS3BucketName
   SumoAppUtils:
-    Type: AWS::Serverless::Application
+    Type: AWS::Serverless::Function
     Properties:
-      Location: https://s3.us-west-2.amazonaws.com/sumo-app-utils/1f8cf1119141ad7624b12dcb11d9196d.template
+      Handler: main.handler
+      Runtime: python3.7
+      CodeUri: s3://sumo-app-utils/bd3029da1c13ebc3e17509f137919471
+      MemorySize: 128
+      Timeout: 300
   TargetS3Bucket:
     Type: AWS::S3::Bucket
     Condition: CreateBucket
@@ -252,7 +256,7 @@ Resources:
       ServiceToken:
         Fn::GetAtt:
         - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
+        - Arn
       Region:
         Ref: AWS::Region
       CollectorType: Hosted
@@ -274,7 +278,7 @@ Resources:
       ServiceToken:
         Fn::GetAtt:
         - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
+        - Arn
       Region:
         Ref: AWS::Region
       SourceName:
@@ -307,7 +311,7 @@ Resources:
       ServiceToken:
         Fn::GetAtt:
         - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
+        - Arn
       Region:
         Ref: AWS::Region
       AppName: AWS CloudTrail
