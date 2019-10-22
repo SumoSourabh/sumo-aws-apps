@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: A CloudFormation template that creates a role for authenticating with Sumo’s AWS integrations.
+
+Metadata:
+  
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "Sumo Logic Deployment Configuration"
+        Parameters:
+          - SumoDeployment
+          - SumoAccessID
+          - SumoAccessKey
+          - RemoveSumoResourcesOnDeleteStack
+      -
+        Label:
+          default: "Sumo Logic GuardDuty Collector/Source/App Configuration"
+        Parameters:
+          - InstallGuardDutyApp
+          - CollectorName
+          - SourceName
+          - SourceCategoryName
+          
+      -   
+        Label:
+          default: "Sumo Logic Amazon GuardDuty Benchmark Collector/Source/App Configuration"
+        Parameters:
+          - InstallGuardDutyBenchmarkApp
+          - BenchmarkCollectorName
+          - BenchmarkSourceName
+          - BenchmarkSourceCategoryName
+          
+          
+
+
+Parameters:
+  InstallGuardDutyApp:
+    Type: String
+    Default: "yes"
+    AllowedValues:
+      - "yes"
+      - "no"
+  CollectorName:
+    Type: String
+    Default: GuarddutyCollector
+  SourceName:
+    Type: String
+    Default: GuarddutyEvents
+  SourceCategoryName:
+    Type: String
+    Default: Labs/AWS/Guardduty
+  SumoAccessID:
+    Type: String
+  SumoAccessKey:
+    Type: String
+  SumoDeployment:
+    Type: String
+    AllowedValues:
+      - au
+      - ca
+      - de
+      - eu
+      - jp
+      - us2
+      - us1
+    Description: "Enter au, ca, de, eu, jp, us2, or us1"
+  RemoveSumoResourcesOnDeleteStack:
+    AllowedValues:
+      - true
+      - false
+    Default: false
+    Description: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is false.
+    Type: String
+
+  InstallGuardDutyBenchmarkApp:
+    Type: String
+    Default: "yes"
+    AllowedValues:
+      - "yes"
+      - "no"
+  BenchmarkCollectorName:
+    Type: String
+    Default: GuarddutyBenchmarkCollector
+  BenchmarkSourceName:
+    Type: String
+    Default: GuarddutyBenchmarkEvents
+  BenchmarkSourceCategoryName:
+    Type: String
+    Default: Labs/AWS/Guardduty
+  
+Conditions:
+  InstallGuardDutyCondition: !Equals [ !Ref InstallGuardDutyApp, "yes" ]
+  InstallGuardDutyBenchmarkCondition: !Equals [ !Ref InstallGuardDutyBenchmarkApp, "yes" ]
+
+Resources:
+  sumoguardduty:
+    Condition: InstallGuardDutyCondition
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-guardduty
+        SemanticVersion: 0.0.1
+      Parameters: 
+        CollectorName: !Ref CollectorName
+        RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
+        SourceCategoryName: !Ref SourceCategoryName
+        SourceName: !Ref SourceName
+        SumoAccessID: !Ref SumoAccessID
+        SumoAccessKey: !Ref SumoAccessKey
+        SumoDeployment: !Ref SumoDeployment
+
+  sumoguarddutybenchmark:
+    Condition: InstallGuardDutyBenchmarkCondition
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-guardduty-bench-mark
+        SemanticVersion: 0.0.1
+      Parameters: 
+        CollectorName: !Ref BenchmarkCollectorName
+        RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
+        SourceCategoryName: !Ref BenchmarkSourceCategoryName
+        SourceName: !Ref BenchmarkSourceName
+        SumoAccessID: !Ref SumoAccessID
+        SumoAccessKey: !Ref SumoAccessKey
+        SumoDeployment: !Ref SumoDeployment  
