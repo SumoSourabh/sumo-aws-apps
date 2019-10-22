@@ -106,15 +106,19 @@ Resources:
     Type: AWS::Serverless::Function
 
   SumoAppUtils:
-    Type: AWS::Serverless::Application
+    Type: AWS::Serverless::Function
     Properties:
-      Location: "..\/..\/sumologic-app-utils/packaged.yaml"
+      Handler: main.handler
+      Runtime: python3.7
+      CodeUri: "..\/..\/sumologic-app-utils/src/"
+      MemorySize: 128
+      Timeout: 300
         
 
   SumoHostedCollector:
     Type: Custom::Collector
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       CollectorType: Hosted
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -126,7 +130,7 @@ Resources:
   SumoHTTPSource:
     Type: Custom::HTTPSource
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       SourceName: !Ref SourceName
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -141,7 +145,7 @@ Resources:
   SumoGuardDutyBenchmarkApp:
     Type: Custom::App
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       AppName: "Amazon GuardDuty Benchmark"
       AppId: "8e7efcb3-040a-4a92-9f8d-922fafb24afb"
