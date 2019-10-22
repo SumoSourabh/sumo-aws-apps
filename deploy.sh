@@ -35,8 +35,8 @@ guard_duty_benchmark()
 	read -p 'SourceName; ' SourceName
 	read -p 'SourceCategoryName: ' SourceCategoryName
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
-	
-	sam deploy --template-file packaged.yaml --stack-name  sumologic-guardduty-benchmark \
+	stack_name=sumologic-guardduty-benchmark-$(date "+%Y-%m-%d-%H-%M-%S")
+	sam deploy --template-file packaged.yaml --stack-name  $stack_name \
 	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 	--parameter-overrides SumoDeployment=$sumo_deployment \
 	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
@@ -64,8 +64,8 @@ guard_duty()
 	read -p 'SourceName; ' SourceName
 	read -p 'SourceCategoryName: ' SourceCategoryName
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
-	
-	sam deploy --template-file packaged.yaml --stack-name  sumologic-guardduty \
+	stack_name=sumologic-guardduty-$(date "+%Y-%m-%d-%H-%M-%S")
+	sam deploy --template-file packaged.yaml --stack-name  $stack_name \
 	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 	--parameter-overrides SumoDeployment=$sumo_deployment \
 	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
@@ -99,7 +99,8 @@ vpc_flow_logs()
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
 	read -p 'Amazon VPC Flow Logs App SourceCategoryName: ' VPCFlowLogAppSourceCategoryName
 	
-	sam deploy --template-file packaged.yaml --stack-name  sumologic-vpc-flow-logs \
+	stack_name=sumologic-vpc-flow-logs-$(date "+%Y-%m-%d-%H-%M-%S")
+	sam deploy --template-file packaged.yaml --stack-name  $stack_name \
 	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 	--parameter-overrides SumoDeployment=$sumo_deployment \
 	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
@@ -135,7 +136,8 @@ s3_audit()
 	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
 	
-	sam deploy --template-file packaged.yaml --stack-name  sumologic-s3-audit \
+	stack_name=sumologic-s3-audit-$(date "+%Y-%m-%d-%H-%M-%S")
+	sam deploy --template-file packaged.yaml --stack-name  $stack_name \
 	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 	--parameter-overrides SumoDeployment=$sumo_deployment \
 	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
@@ -174,7 +176,8 @@ waf()
 	
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
 	
-	sam deploy --template-file packaged.yaml --stack-name  sumologic-waf \
+	stack_name=sumologic-waf-$(date "+%Y-%m-%d-%H-%M-%S")
+	sam deploy --template-file packaged.yaml --stack-name  $stack_name \
 	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 	--parameter-overrides SumoDeployment=$sumo_deployment \
 	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
@@ -211,7 +214,8 @@ config()
 	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
 
-	sam deploy --template-file packaged.yaml --stack-name  sumologic-config-stack \
+	stack_name=sumologic-config-stack-$(date "+%Y-%m-%d-%H-%M-%S")
+	sam deploy --template-file packaged.yaml --stack-name  $stack_name \
 	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 	--parameter-overrides SumoDeployment=$sumo_deployment \
 	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
@@ -247,7 +251,8 @@ cloudtrail()
 	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
 
-	sam deploy --template-file packaged.yaml --stack-name  sumologic-cloudtrail-stack \
+	stack_name=sumologic-cloudtrail-stack-$(date "+%Y-%m-%d-%H-%M-%S")
+	sam deploy --template-file packaged.yaml --stack-name  $stack_name \
 	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 	--parameter-overrides SumoDeployment=$sumo_deployment \
 	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
@@ -283,7 +288,8 @@ cis_foundations()
 	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
 
-	sam deploy --template-file packaged.yaml --stack-name  sumologic-cis-foundations-stack \
+	stack_name=sumologic-cis-foundations-stack-$(date "+%Y-%m-%d-%H-%M-%S")
+	sam deploy --template-file packaged.yaml --stack-name  $stack_name \
 	--capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
 	--parameter-overrides SumoDeployment=$sumo_deployment \
 	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
