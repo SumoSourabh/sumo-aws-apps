@@ -14,6 +14,8 @@ Metadata:
           - SumoAccessID
           - SumoAccessKey
           - RemoveSumoResourcesOnDeleteStack
+          - ExternalId
+          - PathExpression
       -
         Label:
           default: "Sumo Logic GuardDuty Collector/Source/App Configuration"
@@ -40,6 +42,8 @@ Metadata:
           - CloudTrailCollectorName
           - CloudTrailSourceName
           - CloudTrailSourceCategoryName
+          - CloudTrailTargetS3BucketName
+          - CreateCloudTrailTargetS3Bucket
 
       -   
         Label:
@@ -58,23 +62,10 @@ Metadata:
           - CISFoundationsCollectorName
           - CISFoundationsSourceName
           - CISFoundationsSourceCategoryName
+          - CISFoundationsTargetS3BucketName
+          - CreateCISTargetS3Bucket
 
 Parameters:
-  InstallGuardDutyApp:
-    Type: String
-    Default: "yes"
-    AllowedValues:
-      - "yes"
-      - "no"
-  CollectorName:
-    Type: String
-    Default: GuarddutyCollector
-  SourceName:
-    Type: String
-    Default: GuarddutyEvents
-  SourceCategoryName:
-    Type: String
-    Default: Labs/AWS/Guardduty
   SumoAccessID:
     Type: String
   SumoAccessKey:
@@ -97,6 +88,22 @@ Parameters:
     Default: false
     Description: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is false.
     Type: String
+
+  InstallGuardDutyApp:
+    Type: String
+    Default: "yes"
+    AllowedValues:
+      - "yes"
+      - "no"
+  CollectorName:
+    Type: String
+    Default: GuarddutyCollector
+  SourceName:
+    Type: String
+    Default: GuarddutyEvents
+  SourceCategoryName:
+    Type: String
+    Default: Labs/AWS/Guardduty
 
   InstallGuardDutyBenchmarkApp:
     Type: String
@@ -129,6 +136,20 @@ Parameters:
   CloudTrailSourceCategoryName:
     Type: String
     Default: Labs/AWS/CloudTrail
+  CloudTrailTargetS3BucketName:
+    Type: String
+  CreateCloudTrailTargetS3Bucket:
+    Type: String
+    Default: "no"
+    AllowedValues:
+      - "yes"
+      - "no"
+  PathExpression:
+    Default: AWSLogs/*
+    Type: String
+  ExternalID:
+    Description: An ID used in the trust policy to designate who can assume the role, formatted as deployment:accountId. Eg. us1:0000000000000131
+    Type: String
   
   InstallConfigApp:
     Type: String
@@ -142,7 +163,7 @@ Parameters:
   ConfigSourceName:
     Type: String
     Default: ConfigEvents
-  ConfigCategoryName:
+  ConfigSourceCategoryName:
     Type: String
     Default: Labs/AWS/Config
   
@@ -158,9 +179,18 @@ Parameters:
   CISFoundationsSourceName:
     Type: String
     Default: CISFoundationsEvents
-  CISFoundationsCategoryName:
+  CISFoundationsSourceCategoryName]:
     Type: String
     Default: Labs/AWS/CISFoundations
+  CISFoundationsTargetS3BucketName:
+    Type: String
+  CreateCISTargetS3Bucket:
+    Type: String
+    Default: "no"
+    AllowedValues:
+      - "yes"
+      - "no"
+
   
 Conditions:
   InstallGuardDutyCondition: !Equals [ !Ref InstallGuardDutyApp, "yes" ]
@@ -201,14 +231,12 @@ Resources:
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment  
-  
-   sumocloudtrail:
+
+  sumocloudtrail: 
     Condition: InstallCloudTrailCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:437178674894:applications/sumo-cloudtrail
-        SemanticVersion: 0.0.1
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: "https://sumo-app-utils.s3-us-west-2.amazonaws.com/cloudtrail-packaged.yaml"
       Parameters: 
         CollectorName: !Ref CloudtrailCollectorName
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -217,8 +245,12 @@ Resources:
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment
+        ExternalID: !Ref ExternalID
+        PathExpression: !Ref PathExpression
+        CloudTrailTargetS3BucketName: !Ref CloudTrailTargetS3BucketName   
+        CreateTargetS3Bucket: !Ref CreateCloudTrailTargetS3Bucket
     
-   sumoconfig:
+  sumoconfig:
     Condition: InstallConfigCondition
     Type: AWS::Serverless::Application
     Properties:
@@ -234,13 +266,11 @@ Resources:
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment
     
-   sumocidfoundations:
+  sumocisfoundations:
     Condition: InstallCISFoundationsCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:437178674894:applications/sumo-cis-foundations-benchmark
-        SemanticVersion: 0.0.1
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: "https://sumo-app-utils.s3-us-west-2.amazonaws.com/cis-foundations-packaged.yaml"
       Parameters: 
         CollectorName: !Ref CISFoundationsCollectorName
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -249,3 +279,7 @@ Resources:
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment
+        ExternalID: !Ref ExternalID
+        PathExpression: !Ref PathExpression
+        CISTargetS3BucketName: !Ref CISFoundationsTargetS3BucketName 
+        CreateTargetS3Bucket: !Ref CreateCISTargetS3Bucket
