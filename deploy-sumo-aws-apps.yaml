@@ -14,26 +14,13 @@ Metadata:
           - SumoAccessID
           - SumoAccessKey
           - RemoveSumoResourcesOnDeleteStack
-          - SumoOrganizationId
-      -
-        Label:
-          default: "Select the Sumo Apps that you want to Deploy:"
-        Parameters:
-          - InstallGuardDutyApp
-          - InstallGuardDutyBenchmarkApp
-          - InstallVPCFlowLogsApp
-          - InstallWAFApp
-          - InstallS3AuditApp
-          - InstallSecurityHub
-          - InstallThreatIntelForAWS
-          - InstallCloudtrailApp
-          - InstallConfigApp
-          - InstallCISFoundationsApp
-          
+          - ExternalId
+          - PathExpression
       -
         Label:
           default: "Sumo Logic GuardDuty Collector/Source/App Configuration"
         Parameters:
+          - InstallGuardDutyApp
           - CollectorName
           - SourceName
           - SourceCategoryName
@@ -42,46 +29,11 @@ Metadata:
         Label:
           default: "Sumo Logic Amazon GuardDuty Benchmark Collector/Source/App Configuration"
         Parameters:
+          - InstallGuardDutyBenchmarkApp
           - BenchmarkCollectorName
           - BenchmarkSourceName
           - BenchmarkSourceCategoryName
-      -   
-        Label:
-          default: "Sumo Logic Amazon VPC Flow Logs Collector/Source/App Configuration"
-        Parameters:
-          - VPCFlowLogsCollectorName
-          - VPCFlowLogsSourceName
-          - VPCFlowLogsTargetS3BucketName
-          - VPCFlowLogsCreateTargetS3Bucket
-          - VPCFlowLogsSourceCategoryName
-          - VPCFlowLogsPathExpression
-          - VPCFlowLogsExcludeRuleName
-          - VPCFlowLogsExcludeRule
-          - VPCFlowLogAppSourceCategoryName
-      -   
-        Label:
-          default: "Sumo Logic Amazon S3 Audit App Collector/Source Configuration"
-        Parameters:
-          - S3AuditCollectorName
-          - S3AuditSourceName
-          - S3AuditLogsTargetS3BucketName
-          - S3AuditCreateTargetS3Bucket
-          - S3AuditSourceCategoryName
-          - S3AuditPathExpression
-      -   
-        Label:
-          default: "Sumo Logic AWS WAF App Collector/Source Configuration"
-        Parameters:
-          - WAFCollectorName
-          - WAFSourceName
-          - KinesisDestinationS3BucketName
-          - CreateKinesisDestinationS3Bucket
-          - WAFCreateTargetS3Bucket
-          - WAFSourceCategoryName
-          - WAFPathExpression
-          - DeliveryStreamName
-          - CompressionFormat
-          - S3BackupMode
+      
       -   
         Label:
           default: "Sumo Logic AWS CloudTrail Collector/Source/App Configuration"
@@ -90,6 +42,8 @@ Metadata:
           - CloudTrailCollectorName
           - CloudTrailSourceName
           - CloudTrailSourceCategoryName
+          - CloudTrailTargetS3BucketName
+          - CreateCloudTrailTargetS3Bucket
 
       -   
         Label:
@@ -99,25 +53,7 @@ Metadata:
           - ConfigCollectorName
           - ConfigSourceName
           - ConfigSourceCategoryName
-      -   
-        Label:
-          default: "Sumo Logic AWS Security Hub App Collector/Source Configuration"
-        Parameters:
-          - EnableSecurityHub
-          - SecurityHubLogsS3BucketName
-          - SecurityHubCreateS3Bucket
-          - SecurityHubCollectorName
-          - ConnectionName
-          - SecurityHubSourceCategoryName
       
-      -   
-        Label:
-          default: "Sumo Logic Threat Intel For AWS App Collector/Source Configuration"
-        Parameters:
-          - CloudTrailSourceCategoryName
-          - VPCFlowLogsSourceCategoryName
-          - ELBSourceCategory 
-
       -   
         Label:
           default: "Sumo Logic AWS CIS Foundations Benchmark Collector/Source/App Configuration"
@@ -126,23 +62,10 @@ Metadata:
           - CISFoundationsCollectorName
           - CISFoundationsSourceName
           - CISFoundationsSourceCategoryName
+          - CISFoundationsTargetS3BucketName
+          - CreateCISTargetS3Bucket
 
 Parameters:
-  InstallGuardDutyApp:
-    Type: String
-    Default: "yes"
-    AllowedValues:
-      - "yes"
-      - "no"
-  CollectorName:
-    Type: String
-    Default: GuarddutyCollector
-  SourceName:
-    Type: String
-    Default: GuarddutyEvents
-  SourceCategoryName:
-    Type: String
-    Default: Labs/AWS/Guardduty
   SumoAccessID:
     Type: String
   SumoAccessKey:
@@ -162,9 +85,25 @@ Parameters:
     AllowedValues:
       - true
       - false
-    Default: true
+    Default: false
     Description: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is false.
     Type: String
+
+  InstallGuardDutyApp:
+    Type: String
+    Default: "yes"
+    AllowedValues:
+      - "yes"
+      - "no"
+  CollectorName:
+    Type: String
+    Default: GuarddutyCollector
+  SourceName:
+    Type: String
+    Default: GuarddutyEvents
+  SourceCategoryName:
+    Type: String
+    Default: Labs/AWS/Guardduty
 
   InstallGuardDutyBenchmarkApp:
     Type: String
@@ -197,6 +136,20 @@ Parameters:
   CloudTrailSourceCategoryName:
     Type: String
     Default: Labs/AWS/CloudTrail
+  CloudTrailTargetS3BucketName:
+    Type: String
+  CreateCloudTrailTargetS3Bucket:
+    Type: String
+    Default: "no"
+    AllowedValues:
+      - "yes"
+      - "no"
+  PathExpression:
+    Default: AWSLogs/*
+    Type: String
+  ExternalID:
+    Description: An ID used in the trust policy to designate who can assume the role, formatted as deployment:accountId. Eg. us1:0000000000000131
+    Type: String
   
   InstallConfigApp:
     Type: String
@@ -210,7 +163,7 @@ Parameters:
   ConfigSourceName:
     Type: String
     Default: ConfigEvents
-  ConfigCategoryName:
+  ConfigSourceCategoryName:
     Type: String
     Default: Labs/AWS/Config
   
@@ -226,164 +179,17 @@ Parameters:
   CISFoundationsSourceName:
     Type: String
     Default: CISFoundationsEvents
-  CISFoundationsCategoryName:
+  CISFoundationsSourceCategoryName]:
     Type: String
     Default: Labs/AWS/CISFoundations
-
-  InstallVPCFlowLogsApp:
+  CISFoundationsTargetS3BucketName:
     Type: String
-    Default: "yes"
-    AllowedValues:
-      - "yes"
-      - "no"
-  VPCFlowLogsCollectorName:
-    Type: String
-    Default: VPCFlowLogCollector
-  VPCFlowLogsSourceName:
-    Type: String
-    Default: VPCFlowLogEvents
-  VPCFlowLogsSourceCategoryName:
-    Type: String
-    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: access
-  VPCFlowLogsTargetS3BucketName:
-    Type: String
-    Default: "vpc-flow-logs-s3-bucket"
-    Description: S3 access logs target buket name.
-  VPCFlowLogsCreateTargetS3Bucket:
-    Type: String
-    Default: "yes"
-    AllowedValues: ["yes", "no"]
-    Description: "Do you want to create a target S3 bucket?"
-  VPCFlowLogsPathExpression:
-    Type: String
-    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
-    Default: "*"
-  VPCFlowLogsExcludeRuleName:
-    Type: String
-    Default: Exclude VPC File Flow headers
-  VPCFlowLogsExcludeRule:
-    Type: String
-    Description: Exclude rule regexp
-    Default: version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status
-  
-  InstallS3AuditApp:
-    Type: String
-    Default: "yes"
-    AllowedValues:
-      - "yes"
-      - "no"
-  S3AuditCollectorName:
-    Type: String
-    Default: S3AuditCollector
-  S3AuditSourceName:
-    Type: String
-    Default: S3AuditEvents
-  S3AuditSourceCategoryName:
-    Type: String
-    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: access
-  ExternalID:
-    Type: String
-    Description: An ID used in the trust policy to designate who can assume the role, formatted as deployment:accountId. Eg. us1:0000000000000131
-    
-  S3AuditLogsTargetS3BucketName:
-    Type: String
-    Default: "s3-audit-logs-bucket"
-    Description: S3 access logs target buket name.
-  S3AuditCreateTargetS3Bucket:
-    Type: String
-    Default: "yes"
-    AllowedValues: ["yes", "no"]
-    Description: "Do you want to create a target S3 bucket?"
-  S3AuditPathExpression:
-    Type: String
-    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
-    Default: "*"
-
-  InstallWAFApp:
-    Type: String
-    Default: "yes"
-    AllowedValues:
-      - "yes"
-      - "no"
-  WAFCollectorName:
-    Type: String
-    Default: WAFCollector
-  WAFSourceName:
-    Type: String
-    Default: WAFEvents
-  WAFSourceCategoryName:
-    Type: String
-    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: access
-   
-  KinesisDestinationS3BucketName:
-    Type: String
-    Default: "waf-kinesis-destination-bucket"
-    Description: Kinesis destination bucket.
-  CreateKinesisDestinationS3Bucket:
-    Type: String
-    Default: "yes"
-    AllowedValues: ["yes", "no"]
-    Description: "Do you want to create a target S3 bucket?"
-  WAFPathExpression:
-    Type: String
-    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
-    Default: "*"
-  DeliveryStreamName:
-    Type: String
-    Default: waf-kinesis-delivery-stream
-    Description: "Name of the delivery stream."
-  CompressionFormat:
-    Type: String
-    Default: "ZIP"
-    AllowedValues: ["UNCOMPRESSED","GZIP","ZIP", "Snappy"]
-  S3BackupMode:
-    Type: String
-    Default: "Disabled"
-    AllowedValues: ["Disabled","Enabled"] 
-
-  InstallSecurityHub:
-    Type: String
-    Default: "yes"
-    AllowedValues:
-      - "yes"
-      - "no"
-  EnableSecurityHub:
+  CreateCISTargetS3Bucket:
     Type: String
     Default: "no"
-    AllowedValues: ["yes", "no"]
-  SecurityHubCollectorName:
-    Type: String
-    Default: SecurityHubCollector
-  ConnectionName:
-    Type: String
-    Default: security-hub-webhook-connection
-  SecurityHubSourceCategoryName:
-    Type: String
-    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: access
-   
-  SecurityHubLogsS3BucketName:
-    Type: String
-    Default: "security-hub-collector-destination-bucket"
-    Description: Security Hub Collector destination bucket.
-  SecurityHubCreateS3Bucket:
-    Type: String
-    Default: "yes"
-    AllowedValues: ["yes", "no"]
-    Description: "Do you want to create a target S3 bucket?" 
-
-  InstallThreatIntelForAWS:
-    Type: String
-    Default: "yes"
     AllowedValues:
       - "yes"
       - "no"
-  ELBSourceCategory:
-    Type: String
-    Default: "/AWS/ELB"
 
   
 Conditions:
@@ -392,34 +198,8 @@ Conditions:
   InstallCloudTrailCondition: !Equals [ !Ref InstallCloudtrailApp, "yes" ]
   InstallConfigCondition: !Equals [ !Ref InstallConfigApp, "yes" ]
   InstallCISFoundationsCondition: !Equals [ !Ref InstallCISFoundationsApp, "yes" ]
-  InstallVPCFlowLogsCondition: !Equals [ !Ref InstallVPCFlowLogsApp, "yes" ]
-  InstallS3AuditCondition: !Equals [ !Ref InstallS3AuditApp, "yes" ]
-  InstallWAFCondition: !Equals [ !Ref InstallWAFApp, "yes" ]
-  InstallSecurityHubCondition: !Equals [ !Ref InstallSecurityHub, "yes" ]
-  InstallSecurityHubCondition: !Equals [ !Ref InstallSecurityHub, "yes" ]
-  InstallThreatIntelCondition: !Equals [ !Ref InstallThreatIntelForAWS, "yes" ]
 
 Resources:
-  sumoVPCFlowLogs:
-    Condition: InstallVPCFlowLogsCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-amazon-vpc-flowlogs-app
-        SemanticVersion: 0.0.1
-      Parameters: 
-        CollectorName: !Ref VPCFlowLogsCollectorName
-        RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
-        SourceCategoryName: !Ref VPCFlowLogsSourceCategoryName
-        SourceName: !Ref VPCFlowLogsSourceName
-        SumoAccessID: !Ref SumoAccessID
-        SumoAccessKey: !Ref SumoAccessKey
-        LogsTargetS3BucketName: !Ref VPCFlowLogsTargetS3BucketName
-        VPCFlowLogAppSourceCategoryName: !Ref VPCFlowLogsSourceCategoryName
-        CreateTargetS3Bucket: !Ref VPCFlowLogsCreateTargetS3Bucket
-        PathExpression: !Ref VPCFlowLogsPathExpression
-        SumoDeployment: !Ref SumoDeployment
-        ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
   sumoguardduty:
     Condition: InstallGuardDutyCondition
     Type: AWS::Serverless::Application
@@ -451,14 +231,12 @@ Resources:
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment  
-  
-  sumocloudtrail:
+
+  sumocloudtrail: 
     Condition: InstallCloudTrailCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:437178674894:applications/sumo-cloudtrail
-        SemanticVersion: 0.0.1
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: "https://sumo-app-utils.s3-us-west-2.amazonaws.com/cloudtrail-packaged.yaml"
       Parameters: 
         CollectorName: !Ref CloudtrailCollectorName
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -467,6 +245,10 @@ Resources:
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment
+        ExternalID: !Ref ExternalID
+        PathExpression: !Ref PathExpression
+        CloudTrailTargetS3BucketName: !Ref CloudTrailTargetS3BucketName   
+        CreateTargetS3Bucket: !Ref CreateCloudTrailTargetS3Bucket
     
   sumoconfig:
     Condition: InstallConfigCondition
@@ -481,18 +263,14 @@ Resources:
         SourceCategoryName: !Ref ConfigSourceCategoryName
         SourceName: !Ref ConfigSourceName
         SumoAccessID: !Ref SumoAccessID
-
-
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment
     
-  sumocidfoundations:
+  sumocisfoundations:
     Condition: InstallCISFoundationsCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:437178674894:applications/sumo-cis-foundations-benchmark
-        SemanticVersion: 0.0.1
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: "https://sumo-app-utils.s3-us-west-2.amazonaws.com/cis-foundations-packaged.yaml"
       Parameters: 
         CollectorName: !Ref CISFoundationsCollectorName
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -501,78 +279,7 @@ Resources:
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment
-
-  sumoS3Audit:
-    Condition: InstallS3AuditCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-amazon-s3-audit-app
-        SemanticVersion: 0.0.1
-      Parameters: 
-        CollectorName: !Ref S3AuditCollectorName
-        RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
-        SourceCategoryName: !Ref S3AuditSourceCategoryName
-        SourceName: !Ref S3AuditSourceName
-        SumoAccessID: !Ref SumoAccessID
-        SumoAccessKey: !Ref SumoAccessKey
-        AccessLogsTargetS3BucketName: !Ref S3AuditLogsTargetS3BucketName
-        CreateTargetS3Bucket: !Ref S3AuditCreateTargetS3Bucket
-        PathExpression: !Ref S3AuditPathExpression
-        SumoDeployment: !Ref SumoDeployment
-        ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
-
-  sumoWAF:
-    Condition: InstallWAFCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-aws-waf
-        SemanticVersion: 0.0.1
-      Parameters: 
-        CollectorName: !Ref WAFCollectorName
-        RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
-        SourceCategoryName: !Ref WAFSourceCategoryName
-        SourceName: !Ref WAFSourceName
-        SumoAccessID: !Ref SumoAccessID
-        SumoAccessKey: !Ref SumoAccessKey
-        KinesisDestinationS3BucketName: !Ref KinesisDestinationS3BucketName
-        CreateKinesisDestinationS3Bucket: !Ref CreateKinesisDestinationS3Bucket
-        PathExpression: !Ref WAFPathExpression
-        SumoDeployment: !Ref SumoDeployment
-        ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
-        DeliveryStreamName: !Ref DeliveryStreamName
-
-  sumoSecurityHubStack:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      TemplateURL: https://s3.us-west-2.amazonaws.com/sumologic-sam-app/security-hub-template-2019-10-24-16-35-01.yaml
-      Parameters:
-        SumoDeployment: !Ref SumoDeployment
-        SumoAccessID: !Ref SumoAccessID
-        SumoAccessKey: !Ref SumoAccessKey
-        RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
-        EnableSecurityHub: !Ref EnableSecurityHub
-        CollectorName: !Ref SecurityHubCollectorName
-        ConnectionName: !Ref ConnectionName
-        S3BucketName: !Ref SecurityHubLogsS3BucketName
-        CreateTargetS3Bucket: !Ref SecurityHubCreateS3Bucket
-        SourceCategoryName: !Ref SecurityHubSourceCategoryName
-
-  sumoThreatIntelForAWS:
-    Condition: InstallThreatIntelCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-threat-intel-for-aws-app
-        SemanticVersion: 0.0.1
-      Parameters: 
-        CloudTrialSourceCategory: !Ref CloudTrialSourceCategory
-        RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
-        VPCSourceCategory: !Ref VPCFlowLogsSourceCategoryName
-        ELBSourceCategory: !Ref ELBSourceCategory
-        SumoAccessID: !Ref SumoAccessID
-        SumoAccessKey: !Ref SumoAccessKey
-        SumoDeployment: !Ref SumoDeployment
- 
-
+        ExternalID: !Ref ExternalID
+        PathExpression: !Ref PathExpression
+        CISTargetS3BucketName: !Ref CISFoundationsTargetS3BucketName 
+        CreateTargetS3Bucket: !Ref CreateCISTargetS3Bucket
