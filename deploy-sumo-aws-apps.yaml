@@ -26,7 +26,7 @@ Metadata:
           - InstallS3AuditApp
           - InstallSecurityHub
           - InstallThreatIntelForAWS
-          - InstallCloudtrailApp
+          - InstallCloudTrailApp
           - InstallConfigApp
           - InstallCISFoundationsApp
           
@@ -86,10 +86,12 @@ Metadata:
         Label:
           default: "Sumo Logic AWS CloudTrail Collector/Source/App Configuration"
         Parameters:
-          - InstallCloudtrailApp
           - CloudTrailCollectorName
           - CloudTrailSourceName
+          - CloudTrailTargetS3BucketName
+          - CreateCloudTrailTargetS3Bucket
           - CloudTrailSourceCategoryName
+          - CloudTrailPathExpression
 
       -   
         Label:
@@ -122,10 +124,12 @@ Metadata:
         Label:
           default: "Sumo Logic AWS CIS Foundations Benchmark Collector/Source/App Configuration"
         Parameters:
-          - InstallCISFoundationsApp
           - CISFoundationsCollectorName
           - CISFoundationsSourceName
+          - CISFoundationsTargetS3BucketName
           - CISFoundationsSourceCategoryName
+          - CreateCISFoundationsTargetS3Bucket
+          - CISFoundationsPathExpression
 
 Parameters:
   InstallGuardDutyApp:
@@ -196,8 +200,22 @@ Parameters:
     Default: CloudTrailEvents
   CloudTrailSourceCategoryName:
     Type: String
-    Default: Labs/AWS/CloudTrail
-  
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
+    Default: access
+  CloudTrailPathExpression:
+    Type: String
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
+    Default: "*"
+  CloudTrailTargetS3BucketName:
+    Type: String
+    Default: "cloud-trail-s3-bucket"
+    Description: S3 access logs target buket name.
+  CreateCloudTrailTargetS3Bucket:
+    Type: String
+    Default: "yes"
+    AllowedValues: ["yes", "no"]
+    Description: "Do you want to create a target S3 bucket?"
+
   InstallConfigApp:
     Type: String
     Default: "yes"
@@ -226,9 +244,23 @@ Parameters:
   CISFoundationsSourceName:
     Type: String
     Default: CISFoundationsEvents
-  CISFoundationsCategoryName:
+  CISFoundationsSourceCategoryName:
     Type: String
-    Default: Labs/AWS/CISFoundations
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
+    Default: access
+  CISFoundationsPathExpression:
+    Type: String
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
+    Default: "*"
+  CISFoundationsTargetS3BucketName:
+    Type: String
+    Default: "cis-foundations-benchmark-s3-bucket"
+    Description: S3 access logs target buket name.
+  CreateCISFoundationsTargetS3Bucket:
+    Type: String
+    Default: "yes"
+    AllowedValues: ["yes", "no"]
+    Description: "Do you want to create a target S3 bucket?"
 
   InstallVPCFlowLogsApp:
     Type: String
@@ -283,10 +315,6 @@ Parameters:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
     Default: access
-  ExternalID:
-    Type: String
-    Description: An ID used in the trust policy to designate who can assume the role, formatted as deployment:accountId. Eg. us1:0000000000000131
-    
   S3AuditLogsTargetS3BucketName:
     Type: String
     Default: "s3-audit-logs-bucket"
@@ -389,7 +417,7 @@ Parameters:
 Conditions:
   InstallGuardDutyCondition: !Equals [ !Ref InstallGuardDutyApp, "yes" ]
   InstallGuardDutyBenchmarkCondition: !Equals [ !Ref InstallGuardDutyBenchmarkApp, "yes" ]
-  InstallCloudTrailCondition: !Equals [ !Ref InstallCloudtrailApp, "yes" ]
+  InstallCloudTrailCondition: !Equals [ !Ref InstallCloudTrailApp, "yes" ]
   InstallConfigCondition: !Equals [ !Ref InstallConfigApp, "yes" ]
   InstallCISFoundationsCondition: !Equals [ !Ref InstallCISFoundationsApp, "yes" ]
   InstallVPCFlowLogsCondition: !Equals [ !Ref InstallVPCFlowLogsApp, "yes" ]
@@ -452,13 +480,11 @@ Resources:
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment  
   
-  sumocloudtrail:
+  sumocloudtrail: 
     Condition: InstallCloudTrailCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:437178674894:applications/sumo-cloudtrail
-        SemanticVersion: 0.0.1
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: "https://sumo-app-utils.s3-us-west-2.amazonaws.com/cloudtrail-packaged.yaml"
       Parameters: 
         CollectorName: !Ref CloudtrailCollectorName
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -467,6 +493,10 @@ Resources:
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment
+        ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
+        PathExpression: !Ref CloudTrailPathExpression
+        CloudTrailTargetS3BucketName: !Ref CloudTrailTargetS3BucketName   
+        CreateTargetS3Bucket: !Ref CreateCloudTrailTargetS3Bucket
     
   sumoconfig:
     Condition: InstallConfigCondition
@@ -481,18 +511,14 @@ Resources:
         SourceCategoryName: !Ref ConfigSourceCategoryName
         SourceName: !Ref ConfigSourceName
         SumoAccessID: !Ref SumoAccessID
-
-
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment
     
-  sumocidfoundations:
+  sumocisfoundations:
     Condition: InstallCISFoundationsCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:437178674894:applications/sumo-cis-foundations-benchmark
-        SemanticVersion: 0.0.1
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: "https://sumo-app-utils.s3-us-west-2.amazonaws.com/cis-foundations-packaged.yaml"
       Parameters: 
         CollectorName: !Ref CISFoundationsCollectorName
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -501,6 +527,10 @@ Resources:
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment
+        ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
+        PathExpression: !Ref CISFoundationsPathExpression
+        CISTargetS3BucketName: !Ref CISFoundationsTargetS3BucketName 
+        CreateTargetS3Bucket: !Ref CreateCISFoundationsTargetS3Bucket
 
   sumoS3Audit:
     Condition: InstallS3AuditCondition
