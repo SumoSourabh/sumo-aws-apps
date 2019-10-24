@@ -206,14 +206,18 @@ Resources:
    Type: "AWS::SNS::TopicPolicy"
 
   SumoAppUtils:
-    Type: AWS::Serverless::Application
+    Type: AWS::Serverless::Function
     Properties:
-      Location: "..\/sumologic-app-utils/packaged.yaml"
+      Handler: main.handler
+      Runtime: python3.7
+      CodeUri: "..\/sumologic-app-utils/src/"
+      MemorySize: 128
+      Timeout: 300
 
   SumoHostedCollector:
     Type: Custom::Collector
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       CollectorType: Hosted
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -225,7 +229,7 @@ Resources:
   SumoS3AuditSource:
     Type: Custom::S3AuditSource
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       SourceName: !Ref SourceName
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -241,7 +245,7 @@ Resources:
   SumoAmazonS3AuditApp:
     Type: Custom::App
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       AppName: "Amazon S3 Audit"
       AppId: "cf3ba421-d959-4b08-9ae8-5bd4202eea87"

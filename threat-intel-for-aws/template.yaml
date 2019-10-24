@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: A CloudFormation template that creates a role for authenticating with Sumo’s AWS integrations.
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: sumo-threat-intel-for-aws-app
+    Description: SumoLogic Threat Intel for AWS Application
+    Author: user1
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: ".\/..\/licence.txt"
+    ReadmeUrl: ".\/README.md"
+    Labels:
+    - Threatintel
+    HomePageUrl: https://github.com/user1/my-app-project
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/user1/my-app-project
+
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "Sumo Logic Deployment Configuration"
+        Parameters:
+          - SumoDeployment
+          - SumoAccessID
+          - SumoAccessKey
+          - RemoveSumoResourcesOnDeleteStack
+      -
+        Label:
+          default: "Sumo Logic Threat Intel for AWS App Configuration"
+        Parameters:
+          - CloudTrialSourceCategory
+          - VPCSourceCategory
+          - ELBSourceCategory 
+          
+
+      
+    ParameterLabels:
+      SumoDeployment:
+        default: "Deployment Name"
+      SumoAccessID:
+        default: "Access ID"
+      SumoAccessKey:
+        default: "Access Key"
+      
+      
+     
+
+Parameters:
+  
+  
+  ELBSourceCategory:
+    Type: String
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
+  
+  VPCSourceCategory:
+    Type: String
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
+  
+  CloudTrialSourceCategory:
+    Type: String
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
+  SumoAccessID:
+    Type: String
+  SumoAccessKey:
+    Type: String
+  SumoDeployment:
+    Type: String
+    AllowedValues:
+      - au
+      - ca
+      - de
+      - eu
+      - jp
+      - us2
+      - us1
+    Description: "Enter au, ca, de, eu, jp, us2, or us1"
+  RemoveSumoResourcesOnDeleteStack:
+    AllowedValues:
+      - true
+      - false
+    Default: false
+    Description: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is false.
+    Type: String
+  
+Resources:
+  
+  SumoAppUtils:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: main.handler
+      Runtime: python3.7
+      CodeUri: "..\/sumologic-app-utils/src/"
+      MemorySize: 128
+      Timeout: 300
+
+  
+
+  SumoThreatIntelForAWSApp:
+    Type: Custom::App
+    Properties:
+      ServiceToken: !GetAtt SumoAppUtils.Arn
+      Region: !Ref "AWS::Region"
+      AppName: "Threat Intel for AWS"
+      AppId: "cff3b4a2-b356-4ee3-beda-d7b5a9184fcf"
+      RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
+      AppSources:
+        awscloudtrail: !Sub "_sourceCategory=${CloudTrialSourceCategory}"
+        awsvpc: !Sub "_sourceCategory=${VPCSourceCategory}"
+        awselb: !Sub "_sourceCategory=${ELBSourceCategory}"
+      SumoAccessID: !Ref SumoAccessID
+      SumoAccessKey: !Ref SumoAccessKey
+      SumoDeployment: !Ref SumoDeployment
+      
+

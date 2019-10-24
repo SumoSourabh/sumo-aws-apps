@@ -239,9 +239,13 @@ class Connections(Resource):
             "url": props.get("URL"),
             "username": props.get("UserName"),
             "password": props.get("Password"),
+            "region": props.get("Region"),
+            "service_name": props.get("ServiceName"),
+            "webhook_type": props.get("WebhookType"),
             "id": props.get("ConnectionId"),
             "connection_id": props.get('connection_id')
         }
+
 
 class S3SourceBase(Resource):
     def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, source_type, props, *args, **kwargs):

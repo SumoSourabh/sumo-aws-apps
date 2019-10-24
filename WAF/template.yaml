@@ -4,6 +4,19 @@ Description: A CloudFormation template that creates a role for authenticating wi
 
 Metadata:
   
+  AWS::ServerlessRepo::Application:
+    Name: sumo-aws-waf
+    Description: SumoLogic AWS WAF Application
+    Author: user1
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: ".\/..\/licence.txt"
+    ReadmeUrl: ".\/README.md"
+    Labels:
+    - WAF
+    HomePageUrl: https://github.com/user1/my-app-project
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/user1/my-app-project
+
   AWS::CloudFormation::Interface:
     ParameterGroups:
       -
@@ -273,14 +286,18 @@ Resources:
          Ref: sumoSNSTopic
   
   SumoAppUtils:
-    Type: AWS::Serverless::Application
+    Type: AWS::Serverless::Function
     Properties:
-      Location: "..\/sumologic-app-utils/packaged.yaml"
+      Handler: main.handler
+      Runtime: python3.7
+      CodeUri: "..\/sumologic-app-utils/src/"
+      MemorySize: 128
+      Timeout: 300
 
   SumoHostedCollector:
     Type: Custom::Collector
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       CollectorType: Hosted
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -292,7 +309,7 @@ Resources:
   S3Source:
     Type: Custom::S3Source
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       SourceName: !Ref SourceName
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -308,7 +325,7 @@ Resources:
   SumoAWSWAFApp:
     Type: Custom::App
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       AppName: "AWS WAF"
       AppId: "87c2e6ca-a526-4745-af48-0c7225127b22"

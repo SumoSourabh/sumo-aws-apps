@@ -5,7 +5,7 @@ Description: A CloudFormation template that creates a role for authenticating wi
 Metadata:
   AWS::ServerlessRepo::Application:
     Name: sumo-amazon-vpc-flowlogs-app
-    Description: SumoLogic Amazon Amazon VPC Flow Logs Application
+    Description: SumoLogic Amazon VPC Flow Logs Application
     Author: user1
     SpdxLicenseId: Apache-2.0
     LicenseUrl: ".\/..\/licence.txt"
@@ -219,14 +219,18 @@ Resources:
    Type: "AWS::SNS::TopicPolicy"
 
   SumoAppUtils:
-    Type: AWS::Serverless::Application
+    Type: AWS::Serverless::Function
     Properties:
-      Location: "..\/sumologic-app-utils/packaged.yaml"
+      Handler: main.handler
+      Runtime: python3.7
+      CodeUri: "..\/sumologic-app-utils/src/"
+      MemorySize: 128
+      Timeout: 300
 
   SumoHostedCollector:
     Type: Custom::Collector
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       CollectorType: Hosted
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -238,7 +242,7 @@ Resources:
   SumoS3Source:
     Type: Custom::S3Source
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       SourceName: !Ref SourceName
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -261,7 +265,7 @@ Resources:
   SumoAmazonVPCFlowLogAApp:
     Type: Custom::App
     Properties:
-      ServiceToken: !GetAtt SumoAppUtils.Outputs.SumoAppUtilsFunction
+      ServiceToken: !GetAtt SumoAppUtils.Arn
       Region: !Ref "AWS::Region"
       AppName: "Amazon VPC Flow Logs"
       AppId: "3546d789-3a45-48df-ac85-6838044d988d"
