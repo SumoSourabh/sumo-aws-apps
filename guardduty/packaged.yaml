@@ -1,5 +1,4 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
 Description: 'This function is invoked by AWS CloudWatch events in response to state
   change in your AWS resources which matches a event target definition. The event
   payload received is then forwarded to Sumo Logic HTTP source endpoint.
@@ -9,18 +8,6 @@ Globals:
   Function:
     Timeout: 300
 Metadata:
-  AWS::ServerlessRepo::Application:
-    Name: sumo-guardduty
-    Description: sumo-guardduty
-    Author: user1
-    SpdxLicenseId: Apache-2.0
-    LicenseUrl: s3://sumologic-sam-app/60dd855ef60687184c3b1f69ed374378
-    ReadmeUrl: s3://sumologic-sam-app/f8285cccc5d34fffb8bf3f1bb6b59413
-    Labels:
-    - tests
-    HomePageUrl: https://github.com/user1/my-app-project
-    SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
@@ -37,146 +24,36 @@ Metadata:
       - SourceCategoryName
       - RemoveSumoResourcesOnDeleteStack
     ParameterLabels:
-      SumoDeployment:
-        default: Deployment Name
+      CollectorName:
+        default: Collector Name
+      RemoveSumoResourcesOnDeleteStack:
+        default: Remove Sumo Resources On Delete Stack
+      SourceCategoryName:
+        default: Source Category Name
+      SourceName:
+        default: Source Name
       SumoAccessID:
         default: Access ID
       SumoAccessKey:
         default: Access Key
-      CollectorName:
-        default: Collector Name
-      SourceName:
-        default: Source Name
-      SourceCategoryName:
-        default: Source Category Name
-      RemoveSumoResourcesOnDeleteStack:
-        default: Remove Sumo Resources On Delete Stack
-Parameters:
-  CollectorName:
-    Type: String
-    Default: GuarddutyCollector
-  SourceName:
-    Type: String
-    Default: GuarddutyEvents
-  SourceCategoryName:
-    Type: String
-    Default: Labs/AWS/Guardduty
-  SumoAccessID:
-    Type: String
-  SumoAccessKey:
-    Type: String
-  SumoDeployment:
-    Type: String
-    AllowedValues:
-    - au
-    - ca
-    - de
-    - eu
-    - jp
-    - us2
-    - us1
-    Description: Enter au, ca, de, eu, jp, us2, or us1
-  RemoveSumoResourcesOnDeleteStack:
-    AllowedValues:
-    - true
-    - false
-    Default: false
-    Description: To delete collector, sources and app when stack is deleted, set this
-      parameter to true. Default is false.
-    Type: String
-Resources:
-  CloudWatchEventFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: s3://sumologic-sam-app/7c6fdcbf7df713ecb6a4bd9bfc8f4f41
-      Handler: cloudwatchevents.handler
-      Runtime: nodejs8.10
-      Environment:
-        Variables:
-          SUMO_ENDPOINT:
-            Fn::GetAtt:
-            - SumoHTTPSource
-            - SUMO_ENDPOINT
-      Events:
-        CloudWatchEventTrigger:
-          Type: CloudWatchEvent
-          Properties:
-            Pattern:
-              source:
-              - aws.guardduty
-  SumoAppUtils:
-    Type: AWS::Serverless::Application
-    Properties:
-      Location: https://s3.us-west-2.amazonaws.com/sumologic-sam-app/78348e1e56894403acd5fe598bc80350.template
-  SumoHostedCollector:
-    Type: Custom::Collector
-    Properties:
-      ServiceToken:
-        Fn::GetAtt:
-        - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
-      Region:
-        Ref: AWS::Region
-      CollectorType: Hosted
-      RemoveOnDeleteStack:
-        Ref: RemoveSumoResourcesOnDeleteStack
-      CollectorName:
-        Ref: CollectorName
-      SumoAccessID:
-        Ref: SumoAccessID
-      SumoAccessKey:
-        Ref: SumoAccessKey
       SumoDeployment:
-        Ref: SumoDeployment
-  SumoHTTPSource:
-    Type: Custom::HTTPSource
-    Properties:
-      ServiceToken:
-        Fn::GetAtt:
-        - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
-      Region:
-        Ref: AWS::Region
-      SourceName:
-        Ref: SourceName
-      RemoveOnDeleteStack:
-        Ref: RemoveSumoResourcesOnDeleteStack
-      SourceCategory:
-        Ref: SourceCategoryName
-      CollectorId:
-        Fn::GetAtt:
-        - SumoHostedCollector
-        - COLLECTOR_ID
-      SumoAccessID:
-        Ref: SumoAccessID
-      SumoAccessKey:
-        Ref: SumoAccessKey
-      SumoDeployment:
-        Ref: SumoDeployment
-      DateFormat: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
-      DateLocatorRegex: .*"updatedAt":"(.*)".*
-  SumoGuardDutyApp:
-    Type: Custom::App
-    Properties:
-      ServiceToken:
-        Fn::GetAtt:
-        - SumoAppUtils
-        - Outputs.SumoAppUtilsFunction
-      Region:
-        Ref: AWS::Region
-      AppName: Amazon GuardDuty
-      AppId: 5a58719f-0f8a-4aa7-993f-9cc337a286aa
-      RemoveOnDeleteStack:
-        Ref: RemoveSumoResourcesOnDeleteStack
-      AppSources:
-        logsrc:
-          Fn::Sub: _sourceCategory=${SourceCategoryName}
-      SumoAccessID:
-        Ref: SumoAccessID
-      SumoAccessKey:
-        Ref: SumoAccessKey
-      SumoDeployment:
-        Ref: SumoDeployment
+        default: Deployment Name
+  AWS::ServerlessRepo::Application:
+    Author: SumoLogic
+    Description: This solution creates resources for processing and sending Amazon
+      GuardDuty Events to Sumo logic.
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
+    Labels:
+    - lambda
+    - sumologic
+    - serverless
+    - guarduty
+    LicenseUrl: s3://sumologic-appdev-aws-sam-apps/ed96ade3777f01f35ff19f5db1a81893
+    Name: sumologic-amazon-guardduty
+    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/7daf71310040aa78aff089c0fc86d37a
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
+    SpdxLicenseId: Apache-2.0
 Outputs:
   CloudWatchEventFunction:
     Description: CloudWatchEvent Processor Function ARN
@@ -190,3 +67,134 @@ Outputs:
       Fn::GetAtt:
       - SumoGuardDutyApp
       - APP_FOLDER_NAME
+Parameters:
+  CollectorName:
+    Default: GuarddutyCollector
+    Type: String
+  RemoveSumoResourcesOnDeleteStack:
+    AllowedValues:
+    - true
+    - false
+    Default: false
+    Description: To delete collector, sources and app when stack is deleted, set this
+      parameter to true. Default is false.
+    Type: String
+  SourceCategoryName:
+    Default: Labs/AWS/Guardduty
+    Type: String
+  SourceName:
+    Default: GuarddutyEvents
+    Type: String
+  SumoAccessID:
+    Type: String
+  SumoAccessKey:
+    Type: String
+  SumoDeployment:
+    AllowedValues:
+    - au
+    - ca
+    - de
+    - eu
+    - jp
+    - us2
+    - us1
+    Description: Enter au, ca, de, eu, jp, us2, or us1
+    Type: String
+Resources:
+  CloudWatchEventFunction:
+    Properties:
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/7c6fdcbf7df713ecb6a4bd9bfc8f4f41
+      Environment:
+        Variables:
+          SUMO_ENDPOINT:
+            Fn::GetAtt:
+            - SumoHTTPSource
+            - SUMO_ENDPOINT
+      Events:
+        CloudWatchEventTrigger:
+          Properties:
+            Pattern:
+              source:
+              - aws.guardduty
+          Type: CloudWatchEvent
+      Handler: cloudwatchevents.handler
+      Runtime: nodejs8.10
+    Type: AWS::Serverless::Function
+  SumoAppUtils:
+    Properties:
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/c9c88f571346ce3d1b2712e42477a2fd
+      Handler: main.handler
+      MemorySize: 128
+      Runtime: python3.7
+      Timeout: 300
+    Type: AWS::Serverless::Function
+  SumoGuardDutyApp:
+    Properties:
+      AppId: 5a58719f-0f8a-4aa7-993f-9cc337a286aa
+      AppName: Amazon GuardDuty
+      AppSources:
+        logsrc:
+          Fn::Sub: _sourceCategory=${SourceCategoryName}
+      Region:
+        Ref: AWS::Region
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Arn
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+    Type: Custom::App
+  SumoHTTPSource:
+    Properties:
+      CollectorId:
+        Fn::GetAtt:
+        - SumoHostedCollector
+        - COLLECTOR_ID
+      DateFormat: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+      DateLocatorRegex: .*"updatedAt":"(.*)".*
+      Region:
+        Ref: AWS::Region
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Arn
+      SourceCategory:
+        Ref: SourceCategoryName
+      SourceName:
+        Ref: SourceName
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+    Type: Custom::HTTPSource
+  SumoHostedCollector:
+    Properties:
+      CollectorName:
+        Ref: CollectorName
+      CollectorType: Hosted
+      Region:
+        Ref: AWS::Region
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Arn
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+    Type: Custom::Collector
+Transform: AWS::Serverless-2016-10-31

@@ -5,7 +5,7 @@ Description: A CloudFormation template that creates a role for authenticating wi
 Metadata:
   AWS::ServerlessRepo::Application:
     Name: sumologic-amazon-s3-audit
-    Description: SumoLogic Amazon S3 Audit Application
+    Description: This solution creates resources for processing and sending Amazon S3 Audit logs to Sumo logic.
     Author: SumoLogic
     SpdxLicenseId: Apache-2.0
     LicenseUrl: "./../licence.txt"

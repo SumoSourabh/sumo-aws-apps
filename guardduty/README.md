@@ -1,4 +1,4 @@
-# sumologic-guardduty-events-processor
+# sumologic-amazon-guardduty
 
 This solution creates resources for processing and sending Amazon GuardDuty Events to Sumo logic.
 
@@ -8,11 +8,17 @@ Made with ❤️ by Sumo Logic AppDev Team. Available on the [AWS Serverless App
 ![GuardDuty Event Collection Flow](https://s3.amazonaws.com/appdev-cloudformation-templates/sumologic-guardduty-evetns-processor.png)
 
 ## Setup
-1. First create an HTTP collector endpoint within SumoLogic. You will need the endpoint URL for the lambda function later.
-2. Go to https://serverlessrepo.aws.amazon.com/applications.
-3. Search for sumologic-guardduty-events-processor and click on deploy.
-4. In Configure application parameters panel paste the HTTP collector endpoint previously configured.
-5. Click on Deploy
+1. Go to https://serverlessrepo.aws.amazon.com/applications.
+2. Search for sumologic-amazon-guardduty and click on deploy.
+3. In Configure application parameters panel paste the HTTP collector endpoint previously configured.
+    - RemoveSumoResourcesOnDeleteStack - True if you need to remove all the resource created when SAM app was installed else false.
+    - SumoDeployment - Enter the SumoLogic deployment.
+    - SumoAccessID - Enter the SumoLogic Access ID for the entered deployment.
+    - SumoAccessKey - Enter the SumoLogic Access Key for the entered deployment.
+    - CollectorName - Enter or update the existing SumoLogic collector name.
+    - SourceName - Enter the Source Name.
+    - SourceCategoryName - Enter the Source Category.
+4. Click on Deploy
 
 ## Lambda Environment Variables
 The following AWS Lambda environment variables are supported
@@ -48,4 +54,3 @@ Apache License 2.0 (Apache-2.0)
 
 ## Support
 Requests & issues should be filed on GitHub: https://github.com/SumoLogic/sumologic-aws-lambda/issues
-
