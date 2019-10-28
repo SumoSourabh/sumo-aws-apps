@@ -176,11 +176,13 @@ do
 		guard_duty
 		;;
 	3)
-		config
+		publish_app_type2 cloudtrail
 		;;
-
+	4) 
+		publish_app_type1 config
+		;;
 	5)
-		cis_foundations
+		publish_app_type2 cis_foundations
 		;;
 	6)
 		publish_app_type1 vpc-flow-logs
