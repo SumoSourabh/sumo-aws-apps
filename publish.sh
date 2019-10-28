@@ -15,6 +15,8 @@ echo '7. S3 Audit'
 echo '8. WAF'
 echo '9. Security Hub'
 echo '10. Threat Intel for AWS'
+echo '11. PCI Compliance for Amazon VPC Flow Logs'
+echo '12. PCI Compliance for AWS Cloud Trail App'
 
 
 
@@ -124,6 +126,44 @@ publish_app_type2()
 	echo Done.
 	
 }
+publish_app_type3()
+{
+  	
+	cd sumo-s3-source-utils
+	rm requirements.txt
+	cp ..\/sumologic-app-utils/src/requirements.txt .
+	
+	rm -r .aws-sam
+	sam build -t template.yaml
+	file_name=sumo-s3-source-utils-$(date "+%Y-%m-%d-%H-%M-%S").yaml
+	region=$(aws configure get region)
+	template_url=https://s3.$region.amazonaws.com/$sam_s3_bucket/$file_name
+	
+	echo $file_name
+	echo $template_url
+	sam package --output-template $file_name --s3-bucket $sam_s3_bucket
+	echo uploading the s3 source utils to s3...
+	aws s3 cp $file_name s3://$sam_s3_bucket
+	
+	echo Installing.......... $1
+	cd ..\/$1
+	rm -r .aws-sam
+	sam build -t template.yaml
+	echo Build completed..........
+	file_name=$1-template-$(date "+%Y-%m-%d-%H-%M-%S").yaml
+	region=$(aws configure get region)
+	template_url=https://s3.$region.amazonaws.com/$sam_s3_bucket/$file_name
+	
+	echo $file_name
+	echo $template_url
+	
+	sam package --output-template $file_name --s3-bucket $sam_s3_bucket
+	echo Package completed..........
+	echo uploading the s3 source utils to s3...
+	aws s3 cp $file_name s3://$sam_s3_bucket
+	echo Done.
+	
+}
 
 while :
 do
@@ -156,6 +196,12 @@ do
 		;;
 	10)
 		publish_app_type1 threat-intel-for-aws
+		;;
+	11)
+		publish_app_type3 pci-compliance-vpc-flow
+		;;
+	12)
+		publish_app_type3 pci-compliance-cloudttrial-app
 		;;
 
 	 
