@@ -3,7 +3,7 @@
 This solution creates resources in AWS for processing and sending Amazon GuardDuty Events to Sumo logic and creates the creates resources in Sumo Logic website and install the guardduty App in your Personal Folder.
 
 
-Made with ❤️ by Sumo Logic AppDev Team. Available on the [AWS Serverless Application Repository](https://aws.amazon.com/serverless)
+Made by Sumo Logic AppDev Team. Available on the [AWS Serverless Application Repository](https://aws.amazon.com/serverless)
 
 ![GuardDuty Event Collection Flow](https://s3.amazonaws.com/appdev-cloudformation-templates/sumologic-guardduty-evetns-processor.png)
 
@@ -21,7 +21,7 @@ Parameters List:
 - Deployment (Required): Sumo Logic Deployment name.
 - Collector Name: Enter the name of the Hosted Collector which will be created in Sumo Logic.
 - Source Name: Enter the name of the Source which will be created within the collector.
-- Source Category: Used to filetr/serach the logs in Sumo Logic. 
+- Source Category: Used to filter/serach the logs in Sumo Logic. 
 - Remove Sumo Resources On Delete Stack: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is false.
 
 ## This will create the below resouces.
