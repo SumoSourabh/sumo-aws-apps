@@ -1,6 +1,6 @@
 # sumologic-amazon-vpc-flow-logs.
 
-This solution Creates S3 bucket in AWS to collect the logs, add required IAM role to S3 so that SumoLogic collects the logs from this S3 bucket and creates the S3 Source, collector in SumoLogic and install the "Amazon VPC Flow Logs" App in "Personal" Folder. 
+This solution Creates S3 bucket in AWS to collect the logs, add required IAM role, so that SumoLogic collects the logs from this S3 bucket and creates the S3 Source, collector, install the "Amazon VPC Flow Logs" App in "Personal" Folder of your SumoLogic.
 
 Made by Sumo Logic AppDev Team. Available on the [AWS Serverless Application Repository](https://aws.amazon.com/serverless)
 
