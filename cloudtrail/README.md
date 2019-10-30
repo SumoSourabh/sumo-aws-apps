@@ -2,7 +2,6 @@
 
 This solution installs the CloudTrail App, creates collectors/sources in Sumo Logic platform and deploys the resources in your AWS account using configuration provided at the time of SAM application deployment.
 
-Made by Sumo Logic AppDev Team. Available on the [AWS Serverless Application Repository](https://aws.amazon.com/serverless)
 
 ![Sumo Logic CloudTrail app](https://user-images.githubusercontent.com/6774570/67530685-bb44d380-f674-11e9-90bb-825e0bfe2118.jpg)
 
