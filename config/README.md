@@ -1,4 +1,4 @@
-# sumologic-config
+# sumologic-amazon-config
 This solution installs the Config App, creates collectors/sources in Sumo Logic platform and deploys the resources in your AWS account using configuration provided at the time of SAM application deployment.
 
 
@@ -19,7 +19,7 @@ This solution installs the Config App, creates collectors/sources in Sumo Logic 
 ### Setup:
 1.	Generate Access key from sumologic console as per docs.
 2.	Go to https://serverlessrepo.aws.amazon.com/applications.
-3.	Search for sumologic-config and click on deploy.
+3.	Search for sumologic-amazon-config and click on deploy.
 4.	In the Configure application parameters panel, enter the following parameters
     - Access ID(Required): Sumo Logic Access ID generated from Step 1
     - Access Key(Required): Sumo Logic Access Key generated from Step 1
@@ -35,3 +35,7 @@ This solution installs the Config App, creates collectors/sources in Sumo Logic 
 ### License
 
 Apache License 2.0 (Apache-2.0)
+
+## Support
+
+Requests & issues should be filed on GitHub: https://github.com/SumoLogic/sumologic-aws-lambda/issues

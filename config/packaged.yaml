@@ -1,18 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
+Conditions:
+  CreateBucket:
+    Fn::Equals:
+    - Ref: CreateTargetS3Bucket
+    - 'yes'
 Metadata:
-  AWS::ServerlessRepo::Application:
-    Name: sumo-config
-    Description: SumoLogic AWS Config Application
-    Author: user1
-    SpdxLicenseId: Apache-2.0
-    LicenseUrl: s3://sumo-app-utils/60dd855ef60687184c3b1f69ed374378
-    ReadmeUrl: s3://sumo-app-utils/d41d8cd98f00b204e9800998ecf8427e
-    Labels:
-    - tests
-    HomePageUrl: https://github.com/user1/my-app-project
-    SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
@@ -35,44 +27,83 @@ Metadata:
       - SourceCategoryName
       - RemoveSumoResourcesOnDeleteStack
     ParameterLabels:
-      SumoDeployment:
-        default: Deployment Name
-      SumoAccessID:
-        default: Access ID
-      SumoAccessKey:
-        default: Access Key
       CollectorName:
         default: Collector Name
-      SourceName:
-        default: Source Name
-      SourceCategoryName:
-        default: Source Category Name
-      PathExpression:
-        default: Path Expression
-      RemoveSumoResourcesOnDeleteStack:
-        default: Remove Sumo Resources On Delete Stack
-      ExternalID:
-        default: IAM Role ExternalID
       ConfigTargetS3BucketName:
         default: Target BucketName
       CreateTargetS3Bucket:
         default: Do you want to create a target S3 bucket?
+      ExternalID:
+        default: IAM Role ExternalID
+      PathExpression:
+        default: Path Expression
+      RemoveSumoResourcesOnDeleteStack:
+        default: Remove Sumo Resources On Delete Stack
+      SourceCategoryName:
+        default: Source Category Name
+      SourceName:
+        default: Source Name
+      SumoAccessID:
+        default: Access ID
+      SumoAccessKey:
+        default: Access Key
+      SumoDeployment:
+        default: Deployment Name
+  AWS::ServerlessRepo::Application:
+    Author: SumoLogic
+    Description: SumoLogic AWS Config Application
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
+    Labels:
+    - lambda
+    - sumologic
+    - serverless
+    - config
+    LicenseUrl: s3://sumologic-appdev-aws-sam-apps/ed96ade3777f01f35ff19f5db1a81893
+    Name: sumologic-amazon-config
+    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/d9ac158ab4521cdd5558e64908e84e6b
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
+    SpdxLicenseId: Apache-2.0
 Parameters:
   CollectorName:
-    Type: String
     Default: ConfigCollector
-  SourceName:
     Type: String
-    Default: ConfigSource
+  ConfigTargetS3BucketName:
+    Description: AWS Config logs target bucket name.
+    Type: String
+  CreateTargetS3Bucket:
+    AllowedValues:
+    - 'yes'
+    - 'no'
+    Default: 'no'
+    Type: String
+  ExternalID:
+    Description: An ID used in the trust policy to designate who can assume the role,
+      formatted as deployment:accountId. Eg. us1:0000000000000131
+    Type: String
+  PathExpression:
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log
+      or ABC.log
+    Type: String
+  RemoveSumoResourcesOnDeleteStack:
+    AllowedValues:
+    - true
+    - false
+    Default: false
+    Description: To delete collector, sources and app when stack is deleted, set this
+      parameter to true. Default is false.
+    Type: String
   SourceCategoryName:
-    Type: String
     Default: AWS/Labs/Config
+    Type: String
+  SourceName:
+    Default: ConfigSource
+    Type: String
   SumoAccessID:
     Type: String
   SumoAccessKey:
     Type: String
   SumoDeployment:
-    Type: String
     AllowedValues:
     - au
     - ca
@@ -82,63 +113,140 @@ Parameters:
     - us2
     - us1
     Description: Enter au, ca, de, eu, jp, us2, or us1
-  RemoveSumoResourcesOnDeleteStack:
-    AllowedValues:
-    - true
-    - false
-    Default: false
-    Description: To delete collector, sources and app when stack is deleted, set this
-      parameter to true. Default is false.
     Type: String
-  ExternalID:
-    Type: String
-    Description: An ID used in the trust policy to designate who can assume the role,
-      formatted as deployment:accountId. Eg. us1:0000000000000131
-  ConfigTargetS3BucketName:
-    Type: String
-    Description: AWS Config logs target bucket name.
-  CreateTargetS3Bucket:
-    Type: String
-    Default: 'no'
-    AllowedValues:
-    - 'yes'
-    - 'no'
-  PathExpression:
-    Type: String
-    Description: Path expression to match one or more S3 objects. For example, ABC*.log
-      or ABC.log
-Conditions:
-  CreateBucket:
-    Fn::Equals:
-    - Ref: CreateTargetS3Bucket
-    - 'yes'
 Resources:
+  ConfigS3BucketPolicy:
+    DependsOn:
+    - SumoS3Bucket
+    Properties:
+      Bucket:
+        Ref: SumoS3Bucket
+      PolicyDocument:
+        Id: AWSConfigBucketDelivery
+        Statement:
+          Action:
+          - s3:GetBucketAcl
+          - s3:ListBucket
+          - s3:PutObject
+          Effect: Allow
+          Principal:
+            Service:
+            - config.amazonaws.com
+          Resource:
+          - Fn::Sub: arn:aws:s3:::${ConfigTargetS3BucketName}
+          - Fn::Sub: arn:aws:s3:::${ConfigTargetS3BucketName}/AWSLogs/*
+    Type: AWS::S3::BucketPolicy
+  DeliveryChannel:
+    DependsOn:
+    - SumoS3Bucket
+    Properties:
+      ConfigSnapshotDeliveryProperties:
+        DeliveryFrequency: One_Hour
+      S3BucketName:
+        Ref: ConfigTargetS3BucketName
+      SnsTopicARN:
+        Ref: SumoSNSTopic
+    Type: AWS::Config::DeliveryChannel
+  SumoAppUtils:
+    Properties:
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/d5de2d9f587253a7f47722e252ab49dc
+      Handler: main.handler
+      MemorySize: 128
+      Runtime: python3.7
+      Timeout: 300
+    Type: AWS::Serverless::Function
+  SumoConfigApp:
+    Properties:
+      AppId: 61be4a8f-6702-4035-bc55-e56d149b181d
+      AppName: AWS Config
+      AppSources:
+        logsrc:
+          Fn::Sub: _sourceCategory=${SourceCategoryName}
+      Region:
+        Ref: AWS::Region
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Arn
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+    Type: Custom::App
+  SumoHTTPSource:
+    Properties:
+      CollectorId:
+        Fn::GetAtt:
+        - SumoHostedCollector
+        - COLLECTOR_ID
+      DateFormat: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+      DateLocatorRegex: .*"updatedAt":"(.*)".*
+      Region:
+        Ref: AWS::Region
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Arn
+      SourceCategory:
+        Ref: SourceCategoryName
+      SourceName:
+        Ref: SourceName
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+    Type: Custom::HTTPSource
+  SumoHostedCollector:
+    Properties:
+      CollectorName:
+        Ref: CollectorName
+      CollectorType: Hosted
+      Region:
+        Ref: AWS::Region
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Arn
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+    Type: Custom::Collector
   SumoRole:
-    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
         Statement:
-        - Effect: Allow
-          Principal:
-            AWS: arn:aws:iam::926226587429:root
-          Action: sts:AssumeRole
+        - Action: sts:AssumeRole
           Condition:
             StringEquals:
               sts:ExternalId:
                 Ref: ExternalID
+          Effect: Allow
+          Principal:
+            AWS: arn:aws:iam::926226587429:root
+        Version: '2012-10-17'
       Path: /
       Policies:
-      - PolicyName: SumoPolicy
-        PolicyDocument:
-          Version: '2012-10-17'
+      - PolicyDocument:
           Statement:
-          - Effect: Allow
-            Action:
+          - Action:
             - s3:GetObject
             - s3:GetObjectVersion
             - s3:ListBucketVersions
             - s3:ListBucket
+            Effect: Allow
             Resource:
             - Fn::Sub:
               - arn:aws:s3:::${ConfigTargetS3BucketName}
@@ -148,14 +256,9 @@ Resources:
               - arn:aws:s3:::${ConfigTargetS3BucketName}/*
               - S3bucketName:
                   Ref: ConfigTargetS3BucketName
-  SumoAppUtils:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: main.handler
-      Runtime: python3.7
-      CodeUri: s3://sumo-app-utils/d62d4c7e4411d98f4a4daba9fb672065
-      MemorySize: 128
-      Timeout: 300
+          Version: '2012-10-17'
+        PolicyName: SumoPolicy
+    Type: AWS::IAM::Role
   SumoS3Bucket:
     DependsOn:
     - SumoSNSpolicy
@@ -168,62 +271,30 @@ Resources:
           Topic:
             Ref: SumoSNSTopic
     Type: AWS::S3::Bucket
-  SumoSNSTopic:
-    Properties:
-      TopicName:
-        Fn::Sub: SumoSNSTopic-${AWS::StackName}
-    Type: AWS::SNS::Topic
-  DeliveryChannel:
-    DependsOn:
-    - SumoS3Bucket
-    Type: AWS::Config::DeliveryChannel
-    Properties:
-      ConfigSnapshotDeliveryProperties:
-        DeliveryFrequency: One_Hour
-      S3BucketName:
-        Ref: ConfigTargetS3BucketName
-      SnsTopicARN:
-        Ref: SumoSNSTopic
-  ConfigS3BucketPolicy:
-    DependsOn:
-    - SumoS3Bucket
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket:
-        Ref: SumoS3Bucket
-      PolicyDocument:
-        Id: AWSConfigBucketDelivery
-        Statement:
-          Effect: Allow
-          Action:
-          - s3:GetBucketAcl
-          - s3:ListBucket
-          - s3:PutObject
-          Principal:
-            Service:
-            - config.amazonaws.com
-          Resource:
-          - Fn::Sub: arn:aws:s3:::${ConfigTargetS3BucketName}
-          - Fn::Sub: arn:aws:s3:::${ConfigTargetS3BucketName}/AWSLogs/*
   SumoSNSSubscription:
-    Type: AWS::SNS::Subscription
     Properties:
-      TopicArn:
-        Ref: SumoSNSTopic
+      DeliveryPolicy:
+        healthyRetryPolicy:
+          backoffFunction: exponential
+          maxDelayTarget: 300
+          minDelayTarget: 10
+          numMaxDelayRetries: 5
+          numMinDelayRetries: 3
+          numNoDelayRetries: 0
+          numRetries: 40
       Endpoint:
         Fn::GetAtt:
         - SumoHTTPSource
         - SUMO_ENDPOINT
       Protocol: https
-      DeliveryPolicy:
-        healthyRetryPolicy:
-          numRetries: 40
-          minDelayTarget: 10
-          maxDelayTarget: 300
-          numMinDelayRetries: 3
-          numMaxDelayRetries: 5
-          numNoDelayRetries: 0
-          backoffFunction: exponential
+      TopicArn:
+        Ref: SumoSNSTopic
+    Type: AWS::SNS::Subscription
+  SumoSNSTopic:
+    Properties:
+      TopicName:
+        Fn::Sub: SumoSNSTopic-${AWS::StackName}
+    Type: AWS::SNS::Topic
   SumoSNSpolicy:
     Properties:
       PolicyDocument:
@@ -232,12 +303,12 @@ Resources:
         - Action:
           - sns:Publish
           Condition:
-            StringEquals:
-              aws:SourceAccount:
-                Ref: AWS::AccountId
             ArnLike:
               aws:SourceArn:
                 Fn::Sub: arn:aws:s3:::${ConfigTargetS3BucketName}
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
           Effect: Allow
           Principal:
             AWS: '*'
@@ -246,72 +317,4 @@ Resources:
       Topics:
       - Ref: SumoSNSTopic
     Type: AWS::SNS::TopicPolicy
-  SumoHostedCollector:
-    Type: Custom::Collector
-    Properties:
-      ServiceToken:
-        Fn::GetAtt:
-        - SumoAppUtils
-        - Arn
-      Region:
-        Ref: AWS::Region
-      CollectorType: Hosted
-      RemoveOnDeleteStack:
-        Ref: RemoveSumoResourcesOnDeleteStack
-      CollectorName:
-        Ref: CollectorName
-      SumoAccessID:
-        Ref: SumoAccessID
-      SumoAccessKey:
-        Ref: SumoAccessKey
-      SumoDeployment:
-        Ref: SumoDeployment
-  SumoHTTPSource:
-    Type: Custom::HTTPSource
-    Properties:
-      ServiceToken:
-        Fn::GetAtt:
-        - SumoAppUtils
-        - Arn
-      Region:
-        Ref: AWS::Region
-      SourceName:
-        Ref: SourceName
-      RemoveOnDeleteStack:
-        Ref: RemoveSumoResourcesOnDeleteStack
-      SourceCategory:
-        Ref: SourceCategoryName
-      CollectorId:
-        Fn::GetAtt:
-        - SumoHostedCollector
-        - COLLECTOR_ID
-      SumoAccessID:
-        Ref: SumoAccessID
-      SumoAccessKey:
-        Ref: SumoAccessKey
-      SumoDeployment:
-        Ref: SumoDeployment
-      DateFormat: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
-      DateLocatorRegex: .*"updatedAt":"(.*)".*
-  SumoConfigApp:
-    Type: Custom::App
-    Properties:
-      ServiceToken:
-        Fn::GetAtt:
-        - SumoAppUtils
-        - Arn
-      Region:
-        Ref: AWS::Region
-      AppName: AWS Config
-      AppId: 61be4a8f-6702-4035-bc55-e56d149b181d
-      RemoveOnDeleteStack:
-        Ref: RemoveSumoResourcesOnDeleteStack
-      AppSources:
-        logsrc:
-          Fn::Sub: _sourceCategory=${SourceCategoryName}
-      SumoAccessID:
-        Ref: SumoAccessID
-      SumoAccessKey:
-        Ref: SumoAccessKey
-      SumoDeployment:
-        Ref: SumoDeployment
+Transform: AWS::Serverless-2016-10-31
