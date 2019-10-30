@@ -1,51 +1,50 @@
-# sumologic-guardduty-events-processor
+# sumologic-aws-waf-application.
 
-This solution creates resources for processing and sending Amazon GuardDuty Events to Sumo logic.
+This solution Create an Amazon Kinesis Data Firehose Delivery Stream with ExtendedS3DestinationConfiguration to deliver the logs to S3 bucket and creates the S3 Source, collector, install the "AWS WAF" App in "Personal" Folder of your SumoLogic.
 
+Made by Sumo Logic AppDev Team. Available on the [AWS Serverless Application Repository](https://aws.amazon.com/serverless)
 
-Made with ❤️ by Sumo Logic AppDev Team. Available on the [AWS Serverless Application Repository](https://aws.amazon.com/serverless)
-
-![GuardDuty Event Collection Flow](https://s3.amazonaws.com/appdev-cloudformation-templates/sumologic-guardduty-evetns-processor.png)
-
+![SumoLogic WAF App](https://github.com/madhusarma/sumo-aws-apps/blob/master/assets/WAF.png)
 ## Setup
-1. First create an HTTP collector endpoint within SumoLogic. You will need the endpoint URL for the lambda function later.
-2. Go to https://serverlessrepo.aws.amazon.com/applications.
-3. Search for sumologic-guardduty-events-processor and click on deploy.
-4. In Configure application parameters panel paste the HTTP collector endpoint previously configured.
+1. Go to https://serverlessrepo.aws.amazon.com/applications.
+2. Search for sumologic-aws-waf and click on deploy.
+4. Provide the parameter values.
 5. Click on Deploy
 
-## Lambda Environment Variables
-The following AWS Lambda environment variables are supported
+## Application Parameters.
+Parameters List:
 
-SUMO_ENDPOINT (REQUIRED) - SumoLogic HTTP Collector endpoint URL.
-SOURCE_CATEGORY_OVERRIDE (OPTIONAL) - Override _sourceCategory metadata field within SumoLogic. If none will not be overridden
-SOURCE_HOST_OVERRIDE (OPTIONAL) - Override _sourceHost metadata field within SumoLogic. If none will not be overridden
-SOURCE_NAME_OVERRIDE (OPTIONAL) - Override _sourceName metadata field within SumoLogic. If none will not be overridden
+- Access ID(Required): Sumo Logic Access ID of your Sumo Logic account.
+- Access Key(Required): Sumo Logic Access Key of your Sumo Logic account.
+- Deployment (Required): Sumo Logic Deployment name.
+- Collector Name: Enter the name of the Hosted Collector which will be created in Sumo Logic.
+- Source Name: Enter the name of the Source which will be created within the collector.
+- Source Category: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
+- Path Expression: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log.
+- ExternalID : An ID used in the trust policy to designate who can assume the role, formatted as deployment:accountId. Eg. us1:0000000000000131
+- Name of the delivery stream: Name of the Kinesis Data Firehose Delivery Stream.
+- Remove Sumo Resources On Delete Stack: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is false.
+- Target BucketName: Log files target S3 bucket.
+- Do you want to create a target S3 bucket?: 
+    - If "yes", then it will creates the above S3 bucket.
+    - if "no", it will not cretae and use the existing bucket.
 
-## Excluding Outer Event Fields
-
-By default, a CloudWatch Event has a format similar to this:
-```
-{
-    "version":"0",
-    "id":"0123456d-7e46-ecb4-f5a2-e59cec50b100",
-    "detail-type":"AWS API Call via CloudTrail",
-    "source":"aws.logs",
-    "account":"012345678908",
-    "time":"2017-11-06T23:36:59Z",
-    "region":"us-east-1",
-    "resources":[ ],
-    "detail":▶{ … }
-}
-```
-This event will be sent as-is to Sumo Logic. If you just want to send the detail key instead, set the removeOuterFields variable to true.
-
-
+## This will create the below resouces.
+- Creates the Kinesis Data Firehose Delivery Stream.
+- Add the IAM roles with S3 destination configuration.
+- Creates the S3 bucket(if required) in AWS to collect the logs.
+- Add IAM role to above S3 bucket, so that SumoLogic S3 source can assume role to read the log files.
+- Creates the SNS Policy,Topic and Add the https subscription to send the notification to SumoLogic, when logfile is added to S3 bucket.
+- Creates the Collector and S3 source in SumoLogic.
+- Install the "AWS WAF" App in your Sumologic "Personal" Folder.
 ## License
 
 Apache License 2.0 (Apache-2.0)
 
 
 ## Support
-Requests & issues should be filed on GitHub: https://github.com/SumoLogic/sumologic-aws-lambda/issues
+Requests & issues should be filed on GitHub: https://github.com/SumoLogic/sumologic-aws-apps/issues
+
+
+
 
