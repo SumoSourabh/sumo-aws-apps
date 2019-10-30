@@ -11,7 +11,7 @@ Metadata:
     LicenseUrl: ".\/..\/licence.txt"
     ReadmeUrl: ".\/README.md"
     Labels:
-    - PCI Compliance
+    - PCICompliance
     HomePageUrl: https://github.com/user1/my-app-project
     SemanticVersion: 0.0.1
     SourceCodeUrl: https://github.com/user1/my-app-project
