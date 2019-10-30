@@ -3,16 +3,20 @@ Transform: 'AWS::Serverless-2016-10-31'
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: sumo-cis-foundations
+    Name: sumologic-amazon-cis-foundations
     Description: SumoLogic CIS AWS Foundations Benchmark Application
-    Author: user1
+    Author: SumoLogic
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: ".\/..\/licence.txt"
-    ReadmeUrl: ".\/README.md"
-    Labels: ['tests']
-    HomePageUrl: https://github.com/user1/my-app-project
+    LicenseUrl: "./../licence.txt"
+    ReadmeUrl: "./README.md"
+    Labels:
+    - lambda
+    - sumologic
+    - serverless
+    - s3audit
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
    
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -154,7 +158,7 @@ Resources:
       Properties:
         Handler: main.handler
         Runtime: python3.7
-        CodeUri: "..\/sumologic-app-utils/src/"
+        CodeUri: "../sumologic-app-utils/src/"
         MemorySize: 128
         Timeout: 300
   
