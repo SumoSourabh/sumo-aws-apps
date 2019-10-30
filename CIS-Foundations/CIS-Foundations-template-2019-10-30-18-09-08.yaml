@@ -58,7 +58,7 @@ Metadata:
     - lambda
     - sumologic
     - serverless
-    - s3audit
+    - CIS
     LicenseUrl: s3://sumologic-appdev-aws-sam-apps/ed96ade3777f01f35ff19f5db1a81893
     Name: sumologic-amazon-cis-foundations
     ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/adf5a36cbf55cb0bfe26ec4275d2a91d
@@ -130,7 +130,7 @@ Parameters:
 Resources:
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/4c553931954c146fdd9b7da06f7e331f
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/ea512aab7ee6476507e6e05bd6230b31
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7
@@ -141,7 +141,7 @@ Resources:
       AppId: 9f630fe6-9253-4700-bb7e-36afc97b8cb6
       AppName: CIS AWS Foundations Benchmark
       AppSources:
-        cis:
+        paramId123:
           Fn::Sub: _sourceCategory=${SourceCategoryName}
       Region:
         Ref: AWS::Region

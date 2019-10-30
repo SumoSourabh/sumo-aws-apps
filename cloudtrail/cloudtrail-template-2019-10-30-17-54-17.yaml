@@ -130,7 +130,7 @@ Parameters:
 Resources:
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/711e7352588e484f497e933bb3b8e9dc
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/3677dad0ba33524b9c0d03a6c867518a
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7
@@ -141,7 +141,7 @@ Resources:
       AppId: ceb7fac5-1137-4a04-a5b8-2e49190be3d4
       AppName: AWS CloudTrail
       AppSources:
-        cloudtrailsc:
+        logsrc:
           Fn::Sub: _sourceCategory=${SourceCategoryName}
       Region:
         Ref: AWS::Region
