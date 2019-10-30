@@ -5,17 +5,20 @@ Description: A CloudFormation template that creates a role for authenticating wi
 Metadata:
   
   AWS::ServerlessRepo::Application:
-    Name: sumo-aws-waf
+    Name: sumologic-amazon-waf
     Description: SumoLogic AWS WAF Application
-    Author: user1
+    Author: SumoLogic
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: ".\/..\/licence.txt"
-    ReadmeUrl: ".\/README.md"
+    LicenseUrl: "./../licence.txt"
+    ReadmeUrl: "./README.md"
     Labels:
+    - lambda
+    - sumologic
+    - serverless
     - WAF
-    HomePageUrl: https://github.com/user1/my-app-project
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
 
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -290,7 +293,7 @@ Resources:
     Properties:
       Handler: main.handler
       Runtime: python3.7
-      CodeUri: "..\/sumologic-app-utils/src/"
+      CodeUri: "../sumologic-app-utils/src/"
       MemorySize: 128
       Timeout: 300
 
