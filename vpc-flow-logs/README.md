@@ -4,6 +4,7 @@ This solution Creates S3 bucket in AWS to collect the logs, add required IAM rol
 
 Made by Sumo Logic AppDev Team. Available on the [AWS Serverless Application Repository](https://aws.amazon.com/serverless)
 
+![SumoLogic Amazon VPC Flow Logs App](https://github.com/madhusarma/sumo-aws-apps/blob/master/assets/vpc-flow-logs.png)
 ## Setup
 1. Go to https://serverlessrepo.aws.amazon.com/applications.
 2. Search for sumologic-amazon-vpc-flow-logs and click on deploy.
