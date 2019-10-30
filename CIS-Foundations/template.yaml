@@ -13,7 +13,7 @@ Metadata:
     - lambda
     - sumologic
     - serverless
-    - s3audit
+    - CIS
     HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SemanticVersion: 0.0.1
     SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
