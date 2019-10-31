@@ -130,7 +130,66 @@ Metadata:
           - CISFoundationsSourceCategoryName
           - CreateCISFoundationsTargetS3Bucket
           - CISFoundationsPathExpression
-
+    
+    ParameterLabels:
+      SumoDeployment:
+        default: "Deployment Name"
+      SumoAccessID:
+        default: "Access ID"
+      SumoAccessKey:
+        default: "Access Key"
+      RemoveSumoResourcesOnDeleteStack:
+        default: "Delete SumoLogic Resources when stack is deleted."
+      SumoOrganizationId:
+        default: "Organization Id"
+      InstallGuardDutyApp:
+        default: "Install GuardDuty App"
+      InstallGuardDutyBenchmarkApp:
+        default: "Install GuardDuty Benchmark App"
+      InstallVPCFlowLogsApp:
+        default: "Install VPC Flow Logs App"
+      InstallWAFApp:
+        default: "Install WAF App"
+      InstallS3AuditApp:
+        default: "Install S3Audit App"
+      InstallSecurityHub:
+        default: "Install SecurityHub App"
+      InstallThreatIntelForAWS:
+        default: "Install Threat Intel For AWS App"
+      InstallCloudTrailApp:
+        default: "Install CloudTrail App"
+      InstallConfigApp:
+        default: "Install Config App"
+      InstallCISFoundationsApp:
+        default: "Install CIS Foundations App"
+      CollectorName:
+        default: "Collector Name"
+      SourceName: 
+        default: "Source Name"
+      SourceCategoryName:
+        default: "Source Category"
+      BenchmarkCollectorName:
+        default: "Collector Name"
+      BenchmarkSourceName:
+        default: "Source Name"
+      BenchmarkSourceCategoryName:
+        default: "Source Category"
+      VPCFlowLogsCollectorName:
+        default: "Collector Name"
+      VPCFlowLogsSourceName:
+        default: "Source Name"
+      VPCFlowLogsTargetS3BucketName:
+        default: "Target S3 Bucket Name"
+      VPCFlowLogsCreateTargetS3Bucket:
+        default: "Create Target S3 Bucket"
+      VPCFlowLogsSourceCategoryName:
+        default: "Source Category"
+      VPCFlowLogsPathExpression:
+        default: "Path Expression"
+      VPCFlowLogsExcludeRuleName:
+        default: "Exclude Rule Name"
+      VPCFlowLogsExcludeRule:
+        default: "Exclude Rule"
 Parameters:
   InstallGuardDutyApp:
     Type: String
@@ -147,6 +206,8 @@ Parameters:
   SourceCategoryName:
     Type: String
     Default: Labs/AWS/Guardduty
+  SumoOrganizationId:
+    Type: String
   SumoAccessID:
     Type: String
   SumoAccessKey:
@@ -392,7 +453,13 @@ Parameters:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
     Default: access
-   
+  SecurityHubSourceName:
+    Type: String
+    Default:  SecurityHubSource
+  SecurityHubPathExpression:
+    Type: String
+  SecurityHubExternalID:
+    Type: String
   SecurityHubLogsS3BucketName:
     Type: String
     Default: "security-hub-collector-destination-bucket"
@@ -588,6 +655,9 @@ Resources:
         S3BucketName: !Ref SecurityHubLogsS3BucketName
         CreateTargetS3Bucket: !Ref SecurityHubCreateS3Bucket
         SourceCategoryName: !Ref SecurityHubSourceCategoryName
+        SourceName: !Ref SecurityHubSourceName
+        PathExpression: !Ref SecurityHubPathExpression
+        ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
 
   sumoThreatIntelForAWS:
     Condition: InstallThreatIntelCondition

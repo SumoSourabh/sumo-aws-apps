@@ -422,13 +422,17 @@ security_hub()
 	sam package --output-template packaged.yaml --s3-bucket $sam_s3_bucket
 	
 	echo '\n-----SumoLogic configuration------\n'
-	read -p 'EnableSecurityHub ("Yes"/"No"): ' EnableSecurityHub
+	read -p 'EnableSecurityHub ("yes"/"no"): ' EnableSecurityHub
 	read -p 'CollectorName: ' collector_name
 	read -p 'ConnectionName; ' ConnectionName
+	read -p 'SourceName: ' SourceName
+	read -p 'PathExpression: ' PathExpression
 	read -p 'SourceCategory: ' SourceCategory
+	read -p 'ExternalID (deployment:accountId. Eg. us1:0000000000000131)': ExternalID
 	
 	echo '\n-----Amazon Configuration------\n'
 	read -p 'LogsTargetS3BucketName: ':  LogsTargetS3BucketName
+	read -p 'CreateTargetS3Bucket (yes/no): ': CreateTargetS3Bucket
 	read -p 'RemoveSumoResourcesOnDeleteStack(true/false): ' RemoveSumoResourcesOnDeleteStack
 	
 	
@@ -439,10 +443,14 @@ security_hub()
 	--parameter-overrides SumoDeployment=$sumo_deployment \
 	SumoAccessID=$sumo_access_id SumoAccessKey=$sumo_access_key \
 	CollectorName=$collector_name \
+	SourceName=$SourceName \
 	ConnectionName=$ConnectionName \
 	SourceCategoryName=$SourceCategory \
+	PathExpression=$PathExpression \
 	EnableSecurityHub=$EnableSecurityHub \
 	S3BucketName=$LogsTargetS3BucketName \
+	CreateTargetS3Bucket=$CreateTargetS3Bucket \
+	ExternalID=$ExternalID \
 	RemoveSumoResourcesOnDeleteStack=$RemoveSumoResourcesOnDeleteStack \
 
 	cd ..
