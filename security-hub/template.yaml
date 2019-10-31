@@ -34,7 +34,13 @@ Parameters:
     Type: String
   RemoveSumoResourcesOnDeleteStack:
     Type: String
+  SourceName:
+    Type: String
   SourceCategoryName:
+    Type: String
+  PathExpression:
+    Type: String
+  ExternalID:
     Type: String
   CreateTargetS3Bucket:
     Type: String
@@ -102,6 +108,22 @@ Resources:
       SumoAccessKey: !Ref SumoAccessKey
       SumoDeployment: !Ref SumoDeployment
 
+  SumoS3Source:
+    Type: Custom::S3Source
+    Properties:
+      ServiceToken: !GetAtt SumoAppUtils.Arn
+      Region: !Ref "AWS::Region"
+      SourceName: !Ref SourceName
+      TargetBucketName: !Ref S3BucketName
+      RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
+      SourceCategory: !Ref SourceCategoryName
+      CollectorId: !GetAtt SumoHostedCollector.COLLECTOR_ID
+      SumoAccessID: !Ref SumoAccessID
+      SumoAccessKey: !Ref SumoAccessKey
+      SumoDeployment: !Ref SumoDeployment
+      PathExpression: !Ref PathExpression
+      RoleArn: !GetAtt SumoRole.Arn
+
   Connections:
     Type: Custom::Connections
     Properties:
@@ -119,11 +141,94 @@ Resources:
       SumoAccessKey: !Ref SumoAccessKey
       SumoDeployment: !Ref SumoDeployment
 
+  SumoRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: arn:aws:iam::926226587429:root
+          Action: sts:AssumeRole
+          Condition:
+            StringEquals:
+              sts:ExternalId:
+                Ref: ExternalID
+      Path: "/"
+      Policies:
+      - PolicyName: SumoPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:GetObjectVersion
+              - s3:ListBucketVersions
+              - s3:ListBucket
+            Resource:
+              - !Sub 
+                - arn:aws:s3:::${S3bucketName}
+                - { S3bucketName: !Ref S3BucketName }
+              - !Sub
+                - arn:aws:s3:::${S3bucketName}/*
+                - { S3bucketName: !Ref S3BucketName  }
+
   SecurityHubCollectorS3BucketName:
     Type: AWS::S3::Bucket
     Condition: CreateBucket
     Properties:
       BucketName: !Ref S3BucketName
+      NotificationConfiguration:
+          TopicConfigurations:
+            -
+              Event: s3:ObjectCreated:Put
+              Topic: !Ref sumoS3SorceTopic
+
+  sumoS3SorceTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      TopicName: !Sub "SumoSNSTopic-${AWS::StackName}"
+
+  sumoSNSSubscription:
+    Type: 'AWS::SNS::Subscription'
+    Properties:
+      TopicArn: 
+        Ref: sumoS3SorceTopic
+      Endpoint: !GetAtt SumoS3Source.SUMO_ENDPOINT
+      Protocol: https
+      DeliveryPolicy:
+       healthyRetryPolicy:
+         numRetries: 40
+         minDelayTarget: 10
+         maxDelayTarget: 300
+         numMinDelayRetries: 3
+         numMaxDelayRetries: 5
+         numNoDelayRetries: 0
+         backoffFunction: exponential
+
+  sumoSNSpolicy:
+   Properties:
+     PolicyDocument:
+       Id: SumoTopicPolicy
+       Statement:
+         -
+           Action: "sns:Publish"
+           Condition:
+             StringEquals:
+               aws:SourceAccount: !Ref "AWS::AccountId"
+             ArnLike:
+               aws:SourceArn: !Sub "arn:aws:s3:*:*:${S3BucketName}"
+           Effect: Allow
+           Principal:
+             AWS: "*"
+           Resource:
+             Ref: sumoS3SorceTopic
+     Topics:
+       -
+         Ref: sumoS3SorceTopic
+   Type: "AWS::SNS::TopicPolicy"
 
   SumoAWSSecurityHubApp:
     Type: Custom::App
