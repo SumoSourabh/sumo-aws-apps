@@ -150,17 +150,18 @@ publish_app_type3()
 	rm -r .aws-sam
 	sam build -t template.yaml
 	echo Build completed..........
-	file_name=$1-template-$(date "+%Y-%m-%d-%H-%M-%S").yaml
+	file_name1=$1-template-$(date "+%Y-%m-%d-%H-%M-%S").yaml
 	region=$(aws configure get region)
-	template_url=https://s3.$region.amazonaws.com/$sam_s3_bucket/$file_name
+	template_url1=https://s3.$region.amazonaws.com/$sam_s3_bucket/$file_name1
 	
-	echo $file_name
-	echo $template_url
-	
-	sam package --output-template $file_name --s3-bucket $sam_s3_bucket
+	echo $file_name1
+	echo $template_url1
+	sam package --output-template $file_name1 --s3-bucket $sam_s3_bucket
 	echo Package completed..........
 	echo uploading the s3 source utils to s3...
-	aws s3 cp $file_name s3://$sam_s3_bucket
+	aws s3 cp $file_name1 s3://$sam_s3_bucket
+	echo 'stack TemplateURL: ' $template_url1
+	echo 'S3SourceUtilTempalteS3Url: '  $template_url 
 	echo Done.
 	
 }
