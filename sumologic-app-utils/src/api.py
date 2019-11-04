@@ -106,10 +106,11 @@ class Collector(Resource):
 
     def create(self, collector_type, collector_name, source_category=None, description='', *args, **kwargs):
         collector_id = None
+        epoch = str(time.time())
         collector = {
             'collector': {
                 'collectorType': collector_type,
-                'name': collector_name,
+                'name': collector_name + '-'+ epoch,
                 'description': description,
                 'category': source_category
             }

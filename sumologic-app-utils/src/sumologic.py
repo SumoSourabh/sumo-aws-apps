@@ -1,5 +1,6 @@
 import json
 import requests
+import time
 
 try:
     import cookielib
@@ -7,6 +8,7 @@ except ImportError:
     import http.cookiejar as cookielib
 
 DEFAULT_VERSION = 'v1'
+SLEEP_TIME = 1
 
 
 class SumoLogic(object):
@@ -45,6 +47,7 @@ class SumoLogic(object):
         return self.endpoint+'/%s' % version
 
     def delete(self, method, params=None, version=DEFAULT_VERSION):
+        time.sleep(SLEEP_TIME)
         endpoint = self.get_versioned_endpoint(version)
         r = self.session.delete(endpoint + method, params=params)
         if 400 <= r.status_code < 600:
@@ -53,6 +56,7 @@ class SumoLogic(object):
         return r
 
     def get(self, method, params=None, version=DEFAULT_VERSION):
+        time.sleep(SLEEP_TIME)
         endpoint = self.get_versioned_endpoint(version)
         r = self.session.get(endpoint + method, params=params)
         if 400 <= r.status_code < 600:
@@ -61,6 +65,7 @@ class SumoLogic(object):
         return r
 
     def post(self, method, params, headers=None, version=DEFAULT_VERSION):
+        time.sleep(SLEEP_TIME)
         endpoint = self.get_versioned_endpoint(version)
         r = self.session.post(endpoint + method, data=json.dumps(params), headers=headers)
         if 400 <= r.status_code < 600:
@@ -69,6 +74,7 @@ class SumoLogic(object):
         return r
 
     def put(self, method, params, headers=None, version=DEFAULT_VERSION):
+        time.sleep(SLEEP_TIME)
         endpoint = self.get_versioned_endpoint(version)
         r = self.session.put(endpoint + method, data=json.dumps(params), headers=headers)
         if 400 <= r.status_code < 600:

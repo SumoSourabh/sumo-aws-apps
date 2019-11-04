@@ -2,9 +2,10 @@
 
 This solution installs the CloudTrail App, creates collectors/sources in Sumo Logic platform and deploys the resources in your AWS account using configuration provided at the time of SAM application deployment.
 
+
 ![Sumo Logic CloudTrail app](https://user-images.githubusercontent.com/6774570/67530685-bb44d380-f674-11e9-90bb-825e0bfe2118.jpg)
 
-### Resources in template.yaml
+## Resources in template.yaml
 1.	List of Parameters user needs to input
 2.	IAM role that assumes role from sumologic account and provides access to the S3 bucket
 3.	Serverless lambda function to create collector, source, install app on sumologic platform. This will output S3/Http source endpoint URL which is used in SNS subscription below
@@ -16,7 +17,7 @@ This solution installs the CloudTrail App, creates collectors/sources in Sumo Lo
 9.	SNS policy that provides access to publish messages
 10.	SumoLogic Collector, source and app information captured and passed further to the SAM app in step 3.
 
-### Setup:
+## Setup:
 1.	Generate Access key from sumologic console as per docs.
 2.	Go to https://serverlessrepo.aws.amazon.com/applications.
 3.	Search for sumologic-amazon-cloudtrail and click on deploy.
@@ -32,9 +33,8 @@ This solution installs the CloudTrail App, creates collectors/sources in Sumo Lo
     -	Path Expression: Path Expression to match one or more s3 objects.
 5.  Click on Deploy
 
-### License
+## License
   Apache License 2.0 (Apache-2.0)
- 
+  
 ## Support
-Requests & issues should be filed on GitHub: https://github.com/SumoLogic/sumologic-aws-lambda/issues
-
+Requests & issues should be filed on GitHub: https://github.com/SumoLogic/sumologic-aws-apps/issues
