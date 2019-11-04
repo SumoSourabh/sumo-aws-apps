@@ -57,11 +57,17 @@ Parameters:
     - 'no'
     Default: 'no'
     Type: String
+  ExternalID:
+    Type: String
+  PathExpression:
+    Type: String
   RemoveSumoResourcesOnDeleteStack:
     Type: String
   S3BucketName:
     Type: String
   SourceCategoryName:
+    Type: String
+  SourceName:
     Type: String
   SumoAccessID:
     Type: String
@@ -115,6 +121,11 @@ Resources:
     Properties:
       BucketName:
         Ref: S3BucketName
+      NotificationConfiguration:
+        TopicConfigurations:
+        - Event: s3:ObjectCreated:Put
+          Topic:
+            Ref: sumoS3SorceTopic
     Type: AWS::S3::Bucket
   SecurityHubConfiguration:
     Condition: EnableSecurityHub
@@ -167,7 +178,7 @@ Resources:
     Type: Custom::App
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/808512f0bf4d34b5d1b9b1d6b994c2bb
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/ab10351bd256e84b4669a2a2fffaf330
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7
@@ -193,4 +204,117 @@ Resources:
       SumoDeployment:
         Ref: SumoDeployment
     Type: Custom::Collector
+  SumoRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: sts:AssumeRole
+          Condition:
+            StringEquals:
+              sts:ExternalId:
+                Ref: ExternalID
+          Effect: Allow
+          Principal:
+            AWS: arn:aws:iam::926226587429:root
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action:
+            - s3:GetObject
+            - s3:GetObjectVersion
+            - s3:ListBucketVersions
+            - s3:ListBucket
+            Effect: Allow
+            Resource:
+            - Fn::Sub:
+              - arn:aws:s3:::${S3bucketName}
+              - S3bucketName:
+                  Ref: S3BucketName
+            - Fn::Sub:
+              - arn:aws:s3:::${S3bucketName}/*
+              - S3bucketName:
+                  Ref: S3BucketName
+          Version: '2012-10-17'
+        PolicyName: SumoPolicy
+    Type: AWS::IAM::Role
+  SumoS3Source:
+    Properties:
+      CollectorId:
+        Fn::GetAtt:
+        - SumoHostedCollector
+        - COLLECTOR_ID
+      PathExpression:
+        Ref: PathExpression
+      Region:
+        Ref: AWS::Region
+      RemoveOnDeleteStack:
+        Ref: RemoveSumoResourcesOnDeleteStack
+      RoleArn:
+        Fn::GetAtt:
+        - SumoRole
+        - Arn
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Arn
+      SourceCategory:
+        Ref: SourceCategoryName
+      SourceName:
+        Ref: SourceName
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+      TargetBucketName:
+        Ref: S3BucketName
+    Type: Custom::S3Source
+  sumoS3SorceTopic:
+    Properties:
+      TopicName:
+        Fn::Sub: SumoSNSTopic-${AWS::StackName}
+    Type: AWS::SNS::Topic
+  sumoSNSSubscription:
+    Properties:
+      DeliveryPolicy:
+        healthyRetryPolicy:
+          backoffFunction: exponential
+          maxDelayTarget: 300
+          minDelayTarget: 10
+          numMaxDelayRetries: 5
+          numMinDelayRetries: 3
+          numNoDelayRetries: 0
+          numRetries: 40
+      Endpoint:
+        Fn::GetAtt:
+        - SumoS3Source
+        - SUMO_ENDPOINT
+      Protocol: https
+      TopicArn:
+        Ref: sumoS3SorceTopic
+    Type: AWS::SNS::Subscription
+  sumoSNSpolicy:
+    Properties:
+      PolicyDocument:
+        Id: SumoTopicPolicy
+        Statement:
+        - Action: sns:Publish
+          Condition:
+            ArnLike:
+              aws:SourceArn:
+                Fn::Sub: arn:aws:s3:*:*:${S3BucketName}
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
+          Effect: Allow
+          Principal:
+            AWS: '*'
+          Resource:
+            Ref: sumoS3SorceTopic
+      Topics:
+      - Ref: sumoS3SorceTopic
+    Type: AWS::SNS::TopicPolicy
 Transform: AWS::Serverless-2016-10-31

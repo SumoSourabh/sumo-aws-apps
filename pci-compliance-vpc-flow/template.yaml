@@ -4,17 +4,21 @@ Description: A CloudFormation template that creates the required AWS resources f
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: sumo-amazon-pci-compliance-for-vpc-flow
+    Name: sumologic-amazon-pci-compliance-for-vpc-flow
     Description: Sumologic PCI Compliance for Amazon VPC Flow Application.
-    Author: user1
+    Author: SumoLogic
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: ".\/..\/licence.txt"
-    ReadmeUrl: ".\/README.md"
+    LicenseUrl: "./../licence.txt"
+    ReadmeUrl: "./README.md"
     Labels:
+    - lambda
+    - sumologic
+    - serverless
+    - vpc
     - PCICompliance
-    HomePageUrl: https://github.com/user1/my-app-project
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
 
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -31,7 +35,6 @@ Metadata:
         Parameters:
           - CollectorName
           - SourceName
-          - SourceCategory
           - PathExpression
           - ExternalID
           - MultilineProcessingEnabled
@@ -55,7 +58,7 @@ Metadata:
         default: "Collector Name"
       SourceName:
         default: "Source Name"
-      SourceCategory:
+      PCIVpcFlowAppSourceCategory:
         default: "Source Category"
       PathExpression:
         default: "Path Expression"
@@ -76,7 +79,7 @@ Parameters:
   SourceName:
     Type: String
     Default: PCIVPCSource
-  SourceCategory:
+  PCIVpcFlowAppSourceCategory:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
   SumoAccessID:
@@ -121,8 +124,6 @@ Parameters:
     Type: String
     Description: Exclude rule regexp
     Default: version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes start end action log-status
-  PCIVpcFlowAppSourceCategory:
-    Type: String
   S3SourceUtilTempalteS3Url:
     Type: String
 
@@ -146,7 +147,7 @@ Resources:
         SourceName: !Ref SourceName
         LogsTargetS3BucketName: !Ref LogsTargetS3BucketName
         CreateTargetS3Bucket: !Ref CreateTargetS3Bucket
-        SourceCategory: !Ref SourceCategory
+        PCIVpcFlowAppSourceCategory: !Ref PCIVpcFlowAppSourceCategory
         PathExpression: !Ref PathExpression
         ExternalID: !Ref ExternalID
         MultilineProcessingEnabled: False

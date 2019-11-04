@@ -87,8 +87,10 @@ Metadata:
         Label:
           default: "Sumo Logic AWS Config Collector/Source/App Configuration"
         Parameters:
-          - InstallConfigApp
+          - ConfigTargetS3BucketName
           - ConfigSourceCategoryName
+          - ConfigPathExpression
+
       -   
         Label:
           default: "Sumo Logic AWS Security Hub App Collector/Source Configuration"
@@ -162,6 +164,10 @@ Metadata:
         default: "Install SecurityHub App"
       InstallThreatIntelForAWS:
         default: "Install Threat Intel For AWS App"
+      InstallPCICloudTrailApp:
+        default: "Install PCI compliance for CloudTrail App"
+      InstallPCIVPCFlowLogsApp:
+        default: "Install PCI compliance for VPC App"
       InstallCloudTrailApp:
         default: "Install CloudTrail App"
       InstallConfigApp:
@@ -273,11 +279,19 @@ Parameters:
     AllowedValues:
       - "yes"
       - "no"
-  
-  ConfigCategoryName:
+
+  ConfigSourceCategoryName:
     Type: String
     Default: Labs/AWS/Config
-  
+  ConfigTargetS3BucketName:
+    Type: String
+    Default: "config-bucket"
+    Description: Config logs target buket name.
+  ConfigPathExpression:
+    Type: String
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
+    Default: "*"
+
   InstallCISFoundationsApp:
     Type: String
     Default: "yes"
@@ -430,6 +444,12 @@ Parameters:
     Type: String
     Default: "/AWS/ELB"
 
+  InstallPCICloudTrailApp:
+    Type: String
+    Default: "yes"
+    AllowedValues:
+      - "yes"
+      - "no"
   PCICloudTrailSourceCategory:
     Type: String
   PCICloudTrailPathExpression:
@@ -442,6 +462,12 @@ Parameters:
     AllowedValues: ["yes", "no"]
     Description: "Do you want to create a target S3 bucket?"
 
+  InstallPCIVPCFlowLogsApp:
+    Type: String
+    Default: "yes"
+    AllowedValues:
+      - "yes"
+      - "no"
   PCIVPCSourceCategory:
     Type: String
   PCIVPCPathExpression:
@@ -475,7 +501,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-amazon-vpc-flowlogs-app
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-amazon-vpc-flow-logs
         SemanticVersion: 0.0.1
       Parameters: 
         CollectorName: "QuickStart-AmazonVPCFlowLogs"
@@ -495,7 +521,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-guardduty
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-amazon-guardduty
         SemanticVersion: 0.0.1
       Parameters: 
         CollectorName: "QuickStart-AmazonGuardDuty"
@@ -511,7 +537,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-guardduty-bench-mark
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-amazon-guardduty-benchmark
         SemanticVersion: 0.0.1
       Parameters: 
         CollectorName: "QuickStart-AmazonGuardDutyBenchmark"
@@ -526,11 +552,11 @@ Resources:
     Condition: InstallCloudTrailCondition
     Type: AWS::CloudFormation::Stack
     Properties: 
-      TemplateURL: "https://sumo-app-utils.s3-us-west-2.amazonaws.com/cloudtrail-packaged.yaml"
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/cloudtrail-template-2019-10-30-17-54-17.yaml"
       Parameters: 
         CollectorName: "QuickStart-AWSCloudTrail"
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
-        SourceCategoryName: !Ref CloudtrailSourceCategoryName
+        SourceCategoryName: !Ref CloudTrailSourceCategoryName
         SourceName: "AWSCloudTrail"
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
@@ -545,7 +571,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:437178674894:applications/sumo-config
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-amazon-config
         SemanticVersion: 0.0.1
       Parameters: 
         CollectorName: "QuickStart-AWSConfig"
@@ -555,12 +581,15 @@ Resources:
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
         SumoDeployment: !Ref SumoDeployment
+        ConfigTargetS3BucketName: !Ref ConfigTargetS3BucketName
+        ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
+        PathExpression: !Ref ConfigPathExpression
     
   sumocisfoundations:
     Condition: InstallCISFoundationsCondition
     Type: AWS::CloudFormation::Stack
     Properties: 
-      TemplateURL: "https://sumo-app-utils.s3-us-west-2.amazonaws.com/cis-foundations-packaged.yaml"
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/CIS-Foundations-template-2019-10-30-18-09-08.yaml"
       Parameters: 
         CollectorName: "QuickStart-CISAWSFoundationsBenchmark"
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -579,7 +608,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-amazon-s3-audit-app
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-amazon-s3-audit
         SemanticVersion: 0.0.1
       Parameters: 
         CollectorName: "QuickStart-AmazonS3Audit"
@@ -599,7 +628,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-aws-waf
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-amazon-waf
         SemanticVersion: 0.0.1
       Parameters: 
         CollectorName: "QuickStart-AWSWAF"
@@ -619,7 +648,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: InstallSecurityHubCondition
     Properties:
-      TemplateURL: https://s3.us-west-2.amazonaws.com/sumologic-sam-app/security-hub-template-2019-10-24-16-35-01.yaml
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/security-hub-template-2019-11-04-21-02-57.yaml"
       Parameters:
         SumoDeployment: !Ref SumoDeployment
         SumoAccessID: !Ref SumoAccessID
@@ -640,10 +669,10 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-west-2:296516481872:applications/sumo-threat-intel-for-aws-app
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-threat-intel-for-amazon-app
         SemanticVersion: 0.0.1
-      Parameters: 
-        CloudTrialSourceCategory: !Ref CloudTrialSourceCategory
+      Parameters:
+        CloudTrailSourceCategory: !Ref CloudTrailSourceCategoryName
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
         VPCSourceCategory: !Ref VPCFlowLogsSourceCategoryName
         ELBSourceCategory: !Ref ELBSourceCategory
@@ -655,15 +684,14 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: InstallPCICloudTrailCondition
     Properties:
-      TemplateURL: https://s3.us-west-2.amazonaws.com/sumologic-sam-app/pci-compliance-cloudttrial-app-template-2019-11-01-18-04-11.yaml
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/pci-compliance-cloudttrial-app-template-2019-11-04-21-21-24.yaml"
       Parameters:
-        S3SourceUtilTempalteS3Url: https://s3.us-west-2.amazonaws.com/sumologic-sam-app/sumo-s3-source-utils-2019-11-01-18-03-55.yaml
+        S3SourceUtilTempalteS3Url: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/sumo-s3-source-utils-2019-11-04-21-21-05.yaml"
         SumoDeployment: !Ref SumoDeployment
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
         CollectorName: "QuickStart-PCIComplianceforAWSCloudTrailApp"
-        SourceName: "PCIComplianceforAWSCloudTrailApp"
         SourceCategory: !Ref PCICloudTrailSourceCategory
         LogsTargetS3BucketName: !Ref PCICloudTrailLogsTargetS3BucketName
         CreateTargetS3Bucket: !Ref PCICloudTrailCreateTargetS3Bucket
@@ -671,15 +699,14 @@ Resources:
         PathExpression: !Ref PCICloudTrailPathExpression
         ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
         PCICloudTrailAppSourceCategory: !Ref PCICloudTrailSourceCategory
-        S3SourceUtilTempalteS3Url: https://s3.us-west-2.amazonaws.com/sumologic-sam-app/sumo-s3-source-utils-2019-11-01-18-03-55.yaml
   
   sumoPCIVPCFlowLogsStack:
     Type: AWS::CloudFormation::Stack
     Condition: InstallPCIVPCFlowLogsCondition
     Properties:
-      TemplateURL: https://s3.us-west-2.amazonaws.com/sumologic-sam-app/pci-compliance-vpc-flow-template-2019-11-01-18-02-24.yaml
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/pci-compliance-vpc-flow-template-2019-11-04-22-37-14.yaml"
       Parameters:
-        S3SourceUtilTempalteS3Url: https://s3.us-west-2.amazonaws.com/sumologic-sam-app/sumo-s3-source-utils-2019-11-01-18-02-10.yaml
+        S3SourceUtilTempalteS3Url: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/sumo-s3-source-utils-2019-11-04-22-35-44.yaml"
         SumoDeployment: !Ref SumoDeployment
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
@@ -691,7 +718,6 @@ Resources:
         SourceName: "PCIComplianceforAmazonVPCFlowLogs"
         PathExpression: !Ref PCIVPCPathExpression
         ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
-        VPCFlowLogAppSourceCategoryName: !Ref PCIVPCSourceCategory
 
 
         

@@ -4,17 +4,21 @@ Description: A CloudFormation template that creates the required AWS resources f
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: sumo-amazon-pci-compliance-for-cloudtrail-app
+    Name: sumologic-amazon-pci-compliance-for-cloudtrail
     Description: Sumologic PCI Compliance for AWS CloudTrail App.
-    Author: user1
+    Author: SumoLogic
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: ".\/..\/licence.txt"
-    ReadmeUrl: ".\/README.md"
+    LicenseUrl: "./../licence.txt"
+    ReadmeUrl: "./README.md"
     Labels:
+    - lambda
+    - sumologic
+    - serverless
+    - cloudtrail
     - PCICompliance
-    HomePageUrl: https://github.com/user1/my-app-project
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
 
   AWS::CloudFormation::Interface:
     ParameterGroups:
