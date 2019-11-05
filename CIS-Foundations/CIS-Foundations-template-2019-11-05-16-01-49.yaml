@@ -25,10 +25,10 @@ Metadata:
         default: AWS Resources Configuration
       Parameters:
       - ExternalID
-      - CloudTrailTargetS3BucketName
+      - CISTargetS3BucketName
       - CreateTargetS3Bucket
     ParameterLabels:
-      CloudTrailTargetS3BucketName:
+      CISTargetS3BucketName:
         default: Target BucketName
       CollectorName:
         default: Collector Name
@@ -52,16 +52,16 @@ Metadata:
         default: Deployment Name
   AWS::ServerlessRepo::Application:
     Author: SumoLogic
-    Description: SumoLogic AWS CloudTrail Application
+    Description: SumoLogic CIS AWS Foundations Benchmark Application
     HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     Labels:
     - lambda
     - sumologic
     - serverless
-    - cloudtrail
+    - CIS
     LicenseUrl: s3://sumologic-appdev-aws-sam-apps/ed96ade3777f01f35ff19f5db1a81893
-    Name: sumologic-amazon-cloudtrail
-    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/9325e3645b2e2092beff567413f41aab
+    Name: sumologic-amazon-cis-foundations
+    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/adf5a36cbf55cb0bfe26ec4275d2a91d
     SemanticVersion: 0.0.1
     SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SpdxLicenseId: Apache-2.0
@@ -79,11 +79,11 @@ Outputs:
       - SumoRole
       - Arn
 Parameters:
-  CloudTrailTargetS3BucketName:
-    Description: CloudTrail logs target bucket name.
+  CISTargetS3BucketName:
+    Description: CIS foundtaions logs target bucket name.
     Type: String
   CollectorName:
-    Default: CloudTrailCollector
+    Default: CISFoundtaionsCollector
     Type: String
   CreateTargetS3Bucket:
     AllowedValues:
@@ -110,7 +110,7 @@ Parameters:
   SourceCategoryName:
     Type: String
   SourceName:
-    Default: CloudTrailEvents
+    Default: CISFoundtaionsSource
     Type: String
   SumoAccessID:
     Type: String
@@ -130,18 +130,18 @@ Parameters:
 Resources:
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/3677dad0ba33524b9c0d03a6c867518a
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/c22603916f9796ba81194115206318ce
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7
       Timeout: 300
     Type: AWS::Serverless::Function
-  SumoCloudTrailApp:
+  SumoCISAWSFoundationsBenchmarkApp:
     Properties:
-      AppId: ceb7fac5-1137-4a04-a5b8-2e49190be3d4
-      AppName: AWS CloudTrail
+      AppId: 9f630fe6-9253-4700-bb7e-36afc97b8cb6
+      AppName: CIS AWS Foundations Benchmark
       AppSources:
-        logsrc:
+        paramId123:
           Fn::Sub: _sourceCategory=${SourceCategoryName}
       Region:
         Ref: AWS::Region
@@ -203,13 +203,13 @@ Resources:
             Effect: Allow
             Resource:
             - Fn::Sub:
-              - arn:aws:s3:::${CloudTrailTargetS3BucketName}
+              - arn:aws:s3:::${CISTargetS3BucketName}
               - S3bucketName:
-                  Ref: CloudTrailTargetS3BucketName
+                  Ref: CISTargetS3BucketName
             - Fn::Sub:
-              - arn:aws:s3:::${CloudTrailTargetS3BucketName}/*
+              - arn:aws:s3:::${CISTargetS3BucketName}/*
               - S3bucketName:
-                  Ref: CloudTrailTargetS3BucketName
+                  Ref: CISTargetS3BucketName
           Version: '2012-10-17'
         PolicyName: SumoPolicy
     Type: AWS::IAM::Role
@@ -246,7 +246,7 @@ Resources:
       SumoDeployment:
         Ref: SumoDeployment
       TargetBucketName:
-        Ref: CloudTrailTargetS3BucketName
+        Ref: CISTargetS3BucketName
     Type: Custom::S3Source
   TargetS3Bucket:
     Condition: CreateBucket
@@ -254,7 +254,7 @@ Resources:
     - sumoSNSpolicy
     Properties:
       BucketName:
-        Ref: CloudTrailTargetS3BucketName
+        Ref: CISTargetS3BucketName
       NotificationConfiguration:
         TopicConfigurations:
         - Event: s3:ObjectCreated:Put
@@ -268,14 +268,14 @@ Resources:
       IsLogging: true
       IsMultiRegionTrail: false
       S3BucketName:
-        Ref: CloudTrailTargetS3BucketName
+        Ref: CISTargetS3BucketName
       TrailName:
-        Fn::Sub: SumoCloudTrail-${AWS::StackName}
+        Fn::Sub: SumoCIS-${AWS::StackName}
     Type: AWS::CloudTrail::Trail
   sumoS3BucketPolicy:
     Properties:
       Bucket:
-        Ref: CloudTrailTargetS3BucketName
+        Ref: CISTargetS3BucketName
       PolicyDocument:
         Statement:
         - Action: s3:GetBucketAcl
@@ -283,7 +283,7 @@ Resources:
           Principal:
             Service: cloudtrail.amazonaws.com
           Resource:
-          - Fn::Sub: arn:aws:s3:::${CloudTrailTargetS3BucketName}
+          - Fn::Sub: arn:aws:s3:::${CISTargetS3BucketName}
           Sid: AWSCloudTrailAclCheck
         - Action: s3:PutObject
           Condition:
@@ -293,7 +293,7 @@ Resources:
           Principal:
             Service: cloudtrail.amazonaws.com
           Resource:
-          - Fn::Sub: arn:aws:s3:::${CloudTrailTargetS3BucketName}/*
+          - Fn::Sub: arn:aws:s3:::${CISTargetS3BucketName}/*
           Sid: AWSCloudTrailWrite
     Type: AWS::S3::BucketPolicy
   sumoSNSSubscription:
@@ -330,7 +330,7 @@ Resources:
           Condition:
             ArnLike:
               aws:SourceArn:
-                Fn::Sub: arn:aws:s3:::${CloudTrailTargetS3BucketName}
+                Fn::Sub: arn:aws:s3:::${CISTargetS3BucketName}
             StringEquals:
               aws:SourceAccount:
                 Ref: AWS::AccountId
