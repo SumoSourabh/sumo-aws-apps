@@ -54,7 +54,8 @@ Metadata:
         default: Deployment Name
   AWS::ServerlessRepo::Application:
     Author: SumoLogic
-    Description: SumoLogic Amazon S3 Audit Application
+    Description: This solution creates resources for processing and sending Amazon
+      S3 Audit logs to Sumo logic.
     HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     Labels:
     - lambda
@@ -156,7 +157,7 @@ Resources:
     Type: Custom::App
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/f6a574c786936b49e51040c028e52c70
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/a652fd18b1a658d2b75a644facbd9328
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7

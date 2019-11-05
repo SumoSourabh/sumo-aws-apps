@@ -65,7 +65,7 @@ Metadata:
     - vpcFlowLogs
     LicenseUrl: s3://sumologic-appdev-aws-sam-apps/ed96ade3777f01f35ff19f5db1a81893
     Name: sumologic-amazon-vpc-flow-logs
-    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/5bd5ba9f2d731f9bcdbb6ffec9459eb8
+    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/31e923d356476d8999c528271c66adac
     SemanticVersion: 0.0.1
     SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SpdxLicenseId: Apache-2.0
@@ -168,7 +168,7 @@ Resources:
     Type: Custom::App
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/aa91a03051438cfb8080a0d4508ca95b
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/f29576123497161671d6570c251aa679
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7

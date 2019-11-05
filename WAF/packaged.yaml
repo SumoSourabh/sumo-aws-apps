@@ -71,7 +71,7 @@ Metadata:
     - WAF
     LicenseUrl: s3://sumologic-appdev-aws-sam-apps/ed96ade3777f01f35ff19f5db1a81893
     Name: sumologic-amazon-waf
-    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/55873053b05130c7fdcb8a125a79797e
+    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/42d21e07634e6071d6f24789e5f8831e
     SemanticVersion: 0.0.1
     SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SpdxLicenseId: Apache-2.0
@@ -271,7 +271,7 @@ Resources:
     Type: Custom::App
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/cf23412ab7c0d532318739994578f735
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/100d077ffe5d35632c1ceecc703440a0
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7
