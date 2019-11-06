@@ -4,89 +4,46 @@ Conditions:
     Fn::Equals:
     - Ref: CreateTargetS3Bucket
     - 'yes'
-Description: "A CloudFormation template that creates a role for authenticating with\
-  \ Sumo\u2019s AWS integrations."
+  EnableSecurityHub:
+    Fn::Equals:
+    - Ref: EnableSecurityHub
+    - 'yes'
+Description: An AWS Serverless Specification template describing your function.
 Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-    - Label:
-        default: Sumo Logic Deployment Configuration
-      Parameters:
-      - SumoDeployment
-      - SumoAccessID
-      - SumoAccessKey
-    - Label:
-        default: Sumo Logic Collection Configuration
-      Parameters:
-      - CollectorName
-      - SourceName
-      - SourceCategoryName
-      - PathExpression
-      - RemoveSumoResourcesOnDeleteStack
-    - Label:
-        default: S3 Audit Configuration
-      Parameters:
-      - ExternalID
-      - AccessLogsTargetS3BucketName
-      - CreateTargetS3Bucket
-    ParameterLabels:
-      AccessLogsTargetS3BucketName:
-        default: Target BucketName
-      CollectorName:
-        default: Collector Name
-      CreateTargetS3Bucket:
-        default: Do you want to create a target S3 bucket?
-      ExternalID:
-        default: IAM Role ExternalID
-      PathExpression:
-        default: Path Expression
-      RemoveSumoResourcesOnDeleteStack:
-        default: Remove Sumo Resources On Delete Stack
-      SourceCategoryName:
-        default: Source Category
-      SourceName:
-        default: Source Name
-      SumoAccessID:
-        default: Access ID
-      SumoAccessKey:
-        default: Access Key
-      SumoDeployment:
-        default: Deployment Name
   AWS::ServerlessRepo::Application:
     Author: SumoLogic
-    Description: This solution creates resources for processing and sending Amazon
-      S3 Audit logs to Sumo logic.
+    Description: Sumologic AWS Security Hub Application.
     HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     Labels:
     - lambda
     - sumologic
     - serverless
-    - s3audit
+    - securityhub
     LicenseUrl: s3://sumologic-appdev-aws-sam-apps/ed96ade3777f01f35ff19f5db1a81893
-    Name: sumologic-amazon-s3-audit
-    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/575465a7c5f8c7a1bc39a9a17089d5ba
+    Name: sumologic-amazon-security-hub
+    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/c9f6909e28da9d5640df461ae3d9a489
     SemanticVersion: 0.0.1
     SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SpdxLicenseId: Apache-2.0
 Outputs:
-  SumoEndpoint:
-    Description: SNS Subscription Endpoint
+  SecretKeyForSecurityHubUser:
+    Description: Security Access Key of User
     Value:
       Fn::GetAtt:
-      - SumoS3AuditSource
-      - SUMO_ENDPOINT
-  SumoRoleArn:
-    Description: ARN of the cretaed Role.
+      - SecurityHubUserKey
+      - SecretAccessKey
+  SecurityHubArn:
+    Condition: EnableSecurityHub
     Value:
-      Fn::GetAtt:
-      - SumoRole
-      - Arn
+      Ref: SecurityHubConfiguration
+  SecurityHubUserKey:
+    Description: Access Key of User
+    Value:
+      Ref: SecurityHubUserKey
 Parameters:
-  AccessLogsTargetS3BucketName:
-    Description: S3 access logs target buket name.
-    Type: String
   CollectorName:
-    Default: S3AuditCollector
+    Type: String
+  ConnectionName:
     Type: String
   CreateTargetS3Bucket:
     AllowedValues:
@@ -94,51 +51,115 @@ Parameters:
     - 'no'
     Default: 'no'
     Type: String
+  EnableSecurityHub:
+    AllowedValues:
+    - 'yes'
+    - 'no'
+    Default: 'no'
+    Type: String
   ExternalID:
-    Description: An ID used in the trust policy to designate who can assume the role,
-      formatted as deployment:accountId. Eg. us1:0000000000000131
     Type: String
   PathExpression:
-    Description: Path expression to match one or more S3 objects. For example, ABC*.log
-      or ABC.log
     Type: String
   RemoveSumoResourcesOnDeleteStack:
-    AllowedValues:
-    - true
-    - false
-    Default: false
-    Description: To delete collector, sources and app when stack is deleted, set this
-      parameter to true. Default is false.
+    Type: String
+  S3BucketName:
     Type: String
   SourceCategoryName:
-    Description: Category metadata to use later for querying, e.g. prod/web/apache/access
-      . This data is queried using the '_sourceCategory' key name.
     Type: String
   SourceName:
-    Default: S3AuditEvents
     Type: String
   SumoAccessID:
     Type: String
   SumoAccessKey:
     Type: String
   SumoDeployment:
-    AllowedValues:
-    - au
-    - ca
-    - de
-    - eu
-    - jp
-    - us2
-    - us1
-    Description: Enter au, ca, de, eu, jp, us2, or us1
     Type: String
 Resources:
-  SumoAmazonS3AuditApp:
+  Connections:
     Properties:
-      AppId: cf3ba421-d959-4b08-9ae8-5bd4202eea87
-      AppName: Amazon S3 Audit
+      Description: Webhook Lambda connection for SecurityHub
+      Name:
+        Ref: ConnectionName
+      Password:
+        Fn::GetAtt:
+        - SecurityHubUserKey
+        - SecretAccessKey
+      Region:
+        Ref: AWS::Region
+      ServiceName: execute-api
+      ServiceToken:
+        Fn::GetAtt:
+        - SumoAppUtils
+        - Arn
+      SumoAccessID:
+        Ref: SumoAccessID
+      SumoAccessKey:
+        Ref: SumoAccessKey
+      SumoDeployment:
+        Ref: SumoDeployment
+      Type: WebhookDefinition
+      URL:
+        Fn::GetAtt:
+        - SecurityHubForwarder
+        - Outputs.SecurityHubForwarderApiUrl
+      UserName:
+        Ref: SecurityHubUserKey
+      WebhookType: AWSLambda
+    Type: Custom::Connections
+  SecurityHubCollector:
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-securityhub-collector
+        SemanticVersion: 1.0.8
+      Parameters:
+        S3SourceBucketName:
+          Ref: S3BucketName
+    Type: AWS::Serverless::Application
+  SecurityHubCollectorS3BucketName:
+    Condition: CreateBucket
+    Properties:
+      BucketName:
+        Ref: S3BucketName
+      NotificationConfiguration:
+        TopicConfigurations:
+        - Event: s3:ObjectCreated:Put
+          Topic:
+            Ref: sumoS3SorceTopic
+    Type: AWS::S3::Bucket
+  SecurityHubConfiguration:
+    Condition: EnableSecurityHub
+    Type: AWS::SecurityHub::Hub
+  SecurityHubForwarder:
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-securityhub-forwarder
+        SemanticVersion: 1.0.7
+    Type: AWS::Serverless::Application
+  SecurityHubUser:
+    Properties:
+      Policies:
+      - PolicyDocument:
+          Statement:
+          - Action: execute-api:Invoke
+            Effect: Allow
+            Resource:
+              Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*/*/POST/findings
+          Version: '2012-10-17'
+        PolicyName: apigatewayaccess
+      UserName: SecurityHubUser
+    Type: AWS::IAM::User
+  SecurityHubUserKey:
+    Properties:
+      UserName:
+        Ref: SecurityHubUser
+    Type: AWS::IAM::AccessKey
+  SumoAWSSecurityHubApp:
+    Properties:
+      AppId: 246cf87b-99b6-47cb-bde0-3fe1cb76c6b4
+      AppName: AWS Security Hub
       AppSources:
-        paramId123:
+        findingSrc:
           Fn::Sub: _sourceCategory=${SourceCategoryName}
       Region:
         Ref: AWS::Region
@@ -157,7 +178,7 @@ Resources:
     Type: Custom::App
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/7800ed64ea7601d78f8efc9e9b0e5964
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/017ba184c036f654f6b90cf8915de074
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7
@@ -210,15 +231,15 @@ Resources:
             - Fn::Sub:
               - arn:aws:s3:::${S3bucketName}
               - S3bucketName:
-                  Ref: AccessLogsTargetS3BucketName
+                  Ref: S3BucketName
             - Fn::Sub:
               - arn:aws:s3:::${S3bucketName}/*
               - S3bucketName:
-                  Ref: AccessLogsTargetS3BucketName
+                  Ref: S3BucketName
           Version: '2012-10-17'
         PolicyName: SumoPolicy
     Type: AWS::IAM::Role
-  SumoS3AuditSource:
+  SumoS3Source:
     Properties:
       CollectorId:
         Fn::GetAtt:
@@ -249,20 +270,9 @@ Resources:
       SumoDeployment:
         Ref: SumoDeployment
       TargetBucketName:
-        Ref: AccessLogsTargetS3BucketName
-    Type: Custom::S3AuditSource
-  TargetS3Bucket:
-    Condition: CreateBucket
-    Properties:
-      BucketName:
-        Ref: AccessLogsTargetS3BucketName
-      NotificationConfiguration:
-        TopicConfigurations:
-        - Event: s3:ObjectCreated:Put
-          Topic:
-            Ref: sumoS3AuditTopic
-    Type: AWS::S3::Bucket
-  sumoS3AuditTopic:
+        Ref: S3BucketName
+    Type: Custom::S3Source
+  sumoS3SorceTopic:
     Properties:
       TopicName:
         Fn::Sub: SumoSNSTopic-${AWS::StackName}
@@ -280,11 +290,11 @@ Resources:
           numRetries: 40
       Endpoint:
         Fn::GetAtt:
-        - SumoS3AuditSource
+        - SumoS3Source
         - SUMO_ENDPOINT
       Protocol: https
       TopicArn:
-        Ref: sumoS3AuditTopic
+        Ref: sumoS3SorceTopic
     Type: AWS::SNS::Subscription
   sumoSNSpolicy:
     Properties:
@@ -295,7 +305,7 @@ Resources:
           Condition:
             ArnLike:
               aws:SourceArn:
-                Fn::Sub: arn:aws:s3:*:*:${AccessLogsTargetS3BucketName}
+                Fn::Sub: arn:aws:s3:*:*:${S3BucketName}
             StringEquals:
               aws:SourceAccount:
                 Ref: AWS::AccountId
@@ -303,8 +313,8 @@ Resources:
           Principal:
             AWS: '*'
           Resource:
-            Ref: sumoS3AuditTopic
+            Ref: sumoS3SorceTopic
       Topics:
-      - Ref: sumoS3AuditTopic
+      - Ref: sumoS3SorceTopic
     Type: AWS::SNS::TopicPolicy
 Transform: AWS::Serverless-2016-10-31

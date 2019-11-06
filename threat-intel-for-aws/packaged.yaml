@@ -78,7 +78,7 @@ Parameters:
 Resources:
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/3253b49f1cf85f28f43d156f0bfc439c
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/4e7e008fc0d694ae3a5145a29799cc8e
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7
