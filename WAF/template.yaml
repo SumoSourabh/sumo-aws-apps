@@ -144,6 +144,16 @@ Conditions:
   CreateBucket: !Equals [ !Ref CreateKinesisDestinationS3Bucket, "yes" ]
 
 Resources:
+  KinesisDestinationS3Bucket:
+    Type: AWS::S3::Bucket
+    Condition: CreateBucket
+    Properties:
+      BucketName: !Ref KinesisDestinationS3BucketName
+      NotificationConfiguration:
+        TopicConfigurations:
+          -
+            Event: s3:ObjectCreated:Put
+            Topic: !Ref sumoSNSTopic
 
   KinesisFirehoseDeliveryStream:
     Type: AWS::KinesisFirehose::DeliveryStream
@@ -231,18 +241,6 @@ Resources:
               - !Sub
                 - arn:aws:s3:::${S3bucketName}/*
                 - { S3bucketName: !Ref KinesisDestinationS3BucketName  }
-              
-  
-  KinesisDestinationS3Bucket:
-    Type: AWS::S3::Bucket
-    Condition: CreateBucket
-    Properties:
-      BucketName: !Ref KinesisDestinationS3BucketName
-      NotificationConfiguration:
-          TopicConfigurations:
-            -
-              Event: s3:ObjectCreated:Put
-              Topic: !Ref sumoSNSTopic
 
   sumoSNSTopic:
     Type: 'AWS::SNS::Topic'
