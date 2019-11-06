@@ -8,7 +8,7 @@ except ImportError:
     import http.cookiejar as cookielib
 
 DEFAULT_VERSION = 'v1'
-SLEEP_TIME = 1
+SLEEP_TIME = 10
 
 
 class SumoLogic(object):

@@ -122,7 +122,7 @@ Resources:
     Type: AWS::Serverless::Function
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/38c6c0d9288eb7a40a1a55cb9f6da2d1
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/479e05f19f11c4eebfa19b72e0d62dbc
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7

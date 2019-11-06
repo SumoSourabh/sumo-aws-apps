@@ -4,7 +4,7 @@ Description: A CloudFormation template that creates a role for authenticating wi
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: sumologic-threat-intel-for-amazon-app
+    Name: sumologic-amazon-threat-intel
     Description: SumoLogic Threat Intel for AWS Application
     Author: SumoLogic
     SpdxLicenseId: Apache-2.0

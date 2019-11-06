@@ -246,7 +246,7 @@ Parameters:
   
   BenchmarkSourceCategoryName:
     Type: String
-    Default: Labs/AWS/Guardduty
+    Default: Labs/AWS/Guardduty/benchmark
 
   InstallCloudTrailApp:
     Type: String
@@ -258,14 +258,14 @@ Parameters:
   CloudTrailSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: access
+    Default: Labs/cloudtrail
   CloudTrailPathExpression:
     Type: String
     Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
     Default: "*"
   CloudTrailTargetS3BucketName:
     Type: String
-    Default: "cloud-trail-s3-bucket"
+    Default: "quickstart-cloudtrail-logs"
     Description: S3 access logs target buket name.
   CreateCloudTrailTargetS3Bucket:
     Type: String
@@ -285,7 +285,7 @@ Parameters:
     Default: Labs/AWS/Config
   ConfigTargetS3BucketName:
     Type: String
-    Default: "config-bucket"
+    Default: "quickstart-config-logs"
     Description: Config logs target buket name.
   ConfigPathExpression:
     Type: String
@@ -301,14 +301,14 @@ Parameters:
   CISFoundationsSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: access
+    Default: Labs/CIS
   CISFoundationsPathExpression:
     Type: String
     Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
     Default: "*"
   CISFoundationsTargetS3BucketName:
     Type: String
-    Default: "cis-foundations-benchmark-s3-bucket"
+    Default: "quickstart-cis-logs"
     Description: S3 access logs target buket name.
   CreateCISFoundationsTargetS3Bucket:
     Type: String
@@ -325,10 +325,10 @@ Parameters:
   VPCFlowLogsSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: access
+    Default: Labs/vpc
   VPCFlowLogsTargetS3BucketName:
     Type: String
-    Default: "vpc-flow-logs-s3-bucket"
+    Default: "quickstart-vpc-logs"
     Description: S3 access logs target buket name.
   VPCFlowLogsCreateTargetS3Bucket:
     Type: String
@@ -357,10 +357,10 @@ Parameters:
   S3AuditSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: access
+    Default: Labs/s3audit
   S3AuditLogsTargetS3BucketName:
     Type: String
-    Default: "s3-audit-logs-bucket"
+    Default: "quickstart-s3-audit-logs"
     Description: S3 access logs target buket name.
   S3AuditCreateTargetS3Bucket:
     Type: String
@@ -382,15 +382,15 @@ Parameters:
   WAFSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: access
+    Default: "Labs/waf"
    
   KinesisDestinationS3BucketName:
     Type: String
-    Default: "waf-kinesis-destination-bucket"
+    Default: "quickstart-waf-logs"
     Description: Kinesis destination bucket.
   CreateKinesisDestinationS3Bucket:
     Type: String
-    Default: "yes"
+    Default: "no"
     AllowedValues: ["yes", "no"]
     Description: "Do you want to create a target S3 bucket?"
   WAFPathExpression:
@@ -399,7 +399,7 @@ Parameters:
     Default: "*"
   DeliveryStreamName:
     Type: String
-    Default: waf-kinesis-delivery-stream
+    Default: waf-kinesis-delivery-stream-quickstart
     Description: "Name of the delivery stream."
   
   InstallSecurityHub:
@@ -419,14 +419,15 @@ Parameters:
   SecurityHubSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: access
+    Default: Labs/hub
  
   SecurityHubPathExpression:
     Type: String
+    Default: "*"
   
   SecurityHubLogsS3BucketName:
     Type: String
-    Default: "security-hub-collector-destination-bucket"
+    Default: "quickstart-hub-logs"
     Description: Security Hub Collector destination bucket.
   SecurityHubCreateS3Bucket:
     Type: String
@@ -452,10 +453,13 @@ Parameters:
       - "no"
   PCICloudTrailSourceCategory:
     Type: String
+    Default: "Labs/pci/cloudtrail"
   PCICloudTrailPathExpression:
     Type: String
+    Default: "*"
   PCICloudTrailLogsTargetS3BucketName:
     Type: String
+    Default: "quickstart-pci-cloud-logs"
   PCICloudTrailCreateTargetS3Bucket:
     Type: String
     Default: "yes"
@@ -470,10 +474,13 @@ Parameters:
       - "no"
   PCIVPCSourceCategory:
     Type: String
+    Default: "Labs/pci/vpc"
   PCIVPCPathExpression:
     Type: String
+    Default: "*"
   PCIVPCLogsTargetS3BucketName:
     Type: String
+    Default: "quickstart-pci-vpc-logs"
   PCIVPCCreateTargetS3Bucket:
     Type: String
     Default: "yes"
@@ -496,6 +503,27 @@ Conditions:
   InstallPCIVPCFlowLogsCondition: !Equals [ !Ref InstallPCIVPCFlowLogsApp, "yes" ]
 
 Resources:
+  sumoWAF:
+    Condition: InstallWAFCondition
+    Type: AWS::Serverless::Application
+    Properties:
+      Location:
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-amazon-waf
+        SemanticVersion: 0.0.1
+      Parameters:
+        CollectorName: "QuickStart-AWSWAF"
+        RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
+        SourceCategoryName: !Ref WAFSourceCategoryName
+        SourceName: "AWSWAF"
+        SumoAccessID: !Ref SumoAccessID
+        SumoAccessKey: !Ref SumoAccessKey
+        KinesisDestinationS3BucketName: !Ref KinesisDestinationS3BucketName
+        CreateKinesisDestinationS3Bucket: !Ref CreateKinesisDestinationS3Bucket
+        PathExpression: !Ref WAFPathExpression
+        SumoDeployment: !Ref SumoDeployment
+        ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
+        DeliveryStreamName: !Ref DeliveryStreamName
+
   sumoVPCFlowLogs:
     Condition: InstallVPCFlowLogsCondition
     Type: AWS::Serverless::Application
@@ -553,7 +581,7 @@ Resources:
     Condition: InstallCloudTrailCondition
     Type: AWS::CloudFormation::Stack
     Properties: 
-      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/cloudtrail-template-2019-11-05-15-58-30.yaml"
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/cloudtrail-template-2019-11-06-08-59-09.yaml"
       Parameters: 
         CollectorName: "QuickStart-AWSCloudTrail"
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -590,7 +618,7 @@ Resources:
     Condition: InstallCISFoundationsCondition
     Type: AWS::CloudFormation::Stack
     Properties: 
-      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/CIS-Foundations-template-2019-11-05-16-01-49.yaml"
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/CIS-Foundations-template-2019-11-06-09-00-06.yaml"
       Parameters: 
         CollectorName: "QuickStart-CISAWSFoundationsBenchmark"
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
@@ -624,32 +652,11 @@ Resources:
         SumoDeployment: !Ref SumoDeployment
         ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
 
-  sumoWAF:
-    Condition: InstallWAFCondition
-    Type: AWS::Serverless::Application
-    Properties:
-      Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-amazon-waf
-        SemanticVersion: 0.0.1
-      Parameters: 
-        CollectorName: "QuickStart-AWSWAF"
-        RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
-        SourceCategoryName: !Ref WAFSourceCategoryName
-        SourceName: "AWSWAF"
-        SumoAccessID: !Ref SumoAccessID
-        SumoAccessKey: !Ref SumoAccessKey
-        KinesisDestinationS3BucketName: !Ref KinesisDestinationS3BucketName
-        CreateKinesisDestinationS3Bucket: !Ref CreateKinesisDestinationS3Bucket
-        PathExpression: !Ref WAFPathExpression
-        SumoDeployment: !Ref SumoDeployment
-        ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
-        DeliveryStreamName: !Ref DeliveryStreamName
-
   sumoSecurityHubStack:
     Type: AWS::CloudFormation::Stack
     Condition: InstallSecurityHubCondition
     Properties:
-      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/security-hub-template-2019-11-05-16-03-16.yaml"
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/security-hub-template-2019-11-06-10-38-32.yaml"
       Parameters:
         SumoDeployment: !Ref SumoDeployment
         SumoAccessID: !Ref SumoAccessID
@@ -670,7 +677,7 @@ Resources:
     Type: AWS::Serverless::Application
     Properties:
       Location:
-        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-threat-intel-for-amazon-app
+        ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-amazon-threat-intel
         SemanticVersion: 0.0.1
       Parameters:
         CloudTrailSourceCategory: !Ref CloudTrailSourceCategoryName
@@ -685,9 +692,9 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: InstallPCICloudTrailCondition
     Properties:
-      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/pci-compliance-cloudttrial-app-template-2019-11-05-16-07-03.yaml"
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/pci-compliance-cloudttrial-app-template-2019-11-06-10-41-11.yaml"
       Parameters:
-        S3SourceUtilTempalteS3Url: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/sumo-s3-source-utils-2019-11-05-16-06-51.yaml"
+        S3SourceUtilTempalteS3Url: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/sumo-s3-source-utils-2019-11-06-10-41-00.yaml"
         SumoDeployment: !Ref SumoDeployment
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
@@ -705,9 +712,9 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: InstallPCIVPCFlowLogsCondition
     Properties:
-      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/pci-compliance-vpc-flow-template-2019-11-05-16-46-11.yaml"
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/pci-compliance-vpc-flow-template-2019-11-06-10-39-41.yaml"
       Parameters:
-        S3SourceUtilTempalteS3Url: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/sumo-s3-source-utils-2019-11-05-16-45-59.yaml"
+        S3SourceUtilTempalteS3Url: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/sumo-s3-source-utils-2019-11-06-10-39-29.yaml"
         SumoDeployment: !Ref SumoDeployment
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
