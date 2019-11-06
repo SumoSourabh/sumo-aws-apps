@@ -267,7 +267,7 @@ Resources:
   SumoS3Source:
       DependsOn:
         - sumoS3BucketPolicy
-      Type: Custom::S3Source
+      Type: Custom::AwsCloudTrail
       Properties:
         ServiceToken: !GetAtt SumoAppUtils.Arn
         Region: !Ref "AWS::Region"
