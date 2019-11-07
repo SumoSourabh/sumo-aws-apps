@@ -97,7 +97,9 @@ Metadata:
         Label:
           default: "Sumo Logic Threat Intel For AWS App Collector/Source Configuration"
         Parameters:
-          - ELBSourceCategory 
+          - CloudTrailSourceCategoryName
+          - VPCFlowLogsSourceCategoryName
+          - ELBSourceCategory
 
       -   
         Label:
@@ -107,7 +109,24 @@ Metadata:
           - CISFoundationsSourceCategoryName
           - CreateCISFoundationsTargetS3Bucket
           - CISFoundationsPathExpression
-          
+      -
+        Label:
+          default: "Sumo Logic PCI Compliance for AWS CloudTrail App. Details are populated from CloudTrail Configuration."
+        Parameters:
+          - CloudTrailSourceCategoryName
+          - CloudTrailPathExpression
+          - CloudTrailTargetS3BucketName
+          - CreateCloudTrailTargetS3Bucket
+
+      -
+        Label:
+          default: "Sumo Logic PCI Compliance for Amazon VPC Flow Logs App. Details are populated from VPC Flow Logs Configuration."
+        Parameters:
+          - VPCFlowLogsSourceCategoryName
+          - VPCFlowLogsPathExpression
+          - VPCFlowLogsTargetS3BucketName
+          - VPCFlowLogsCreateTargetS3Bucket
+
     
     ParameterLabels:
       SumoDeployment:
@@ -407,7 +426,7 @@ Parameters:
     AllowedValues:
       - "yes"
       - "no"
-  
+
 Conditions:
   InstallGuardDutyCondition: !Equals [ !Ref InstallGuardDutyApp, "yes" ]
   InstallGuardDutyBenchmarkCondition: !Equals [ !Ref InstallGuardDutyBenchmarkApp, "yes" ]
