@@ -621,7 +621,7 @@ Resources:
         CollectorName: "QuickStart-AWSCloudTrail"
         SourceCategory: !Ref CloudTrailSourceCategoryName
         LogsTargetS3BucketName: !Ref CloudTrailTargetS3BucketName
-        CreateTargetS3Bucket: "no"
+        CreateTargetS3Bucket: !If [InstallCloudTrailCondition, "no", !Ref CreateCloudTrailTargetS3Bucket]
         SourceName: "AWSCloudTrail"
         PathExpression: !Ref CloudTrailPathExpression
         ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
@@ -640,7 +640,7 @@ Resources:
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
         CollectorName: "QuickStart-AmazonVPCFlowLogs"
         LogsTargetS3BucketName: !Ref VPCFlowLogsTargetS3BucketName
-        CreateTargetS3Bucket: "no"
+        CreateTargetS3Bucket: !If [InstallVPCFlowLogsCondition, "no", !Ref VPCFlowLogsCreateTargetS3Bucket]
         PCIVpcFlowAppSourceCategory: !Ref VPCFlowLogsSourceCategoryName
         SourceName: "AmazonVPCFlowLogs"
         PathExpression: !Ref VPCFlowLogsPathExpression
