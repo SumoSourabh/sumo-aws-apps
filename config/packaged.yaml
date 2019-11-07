@@ -149,7 +149,7 @@ Resources:
     Type: AWS::Config::DeliveryChannel
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/f6b418fb1998c5c26f9a3701554f4c8e
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/cb84781fd2c0e56006262e92b323eddb
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7

@@ -106,11 +106,12 @@ class Collector(Resource):
 
     def create(self, collector_type, collector_name, source_category=None, description='', *args, **kwargs):
         collector_id = None
-        epoch = str(time.time())
+        date = str(datetime.now().strftime("%d%m%Y"))
+        collector_name_date = collector_name + '-' + date
         collector = {
             'collector': {
                 'collectorType': collector_type,
-                'name': collector_name + '-'+ epoch,
+                'name': collector_name_date,
                 'description': description,
                 'category': source_category
             }
@@ -121,7 +122,7 @@ class Collector(Resource):
             print("created collector %s" % collector_id)
         except Exception as e:
             if hasattr(e, 'response') and e.response.json()["code"] == 'collectors.validation.name.duplicate':
-                collector = self._get_collector_by_name(collector_name, collector_type.lower())
+                collector = self._get_collector_by_name(collector_name_date, collector_type.lower())
                 collector_id = collector['id']
                 print("fetched existing collector %s" % collector_id)
             else:

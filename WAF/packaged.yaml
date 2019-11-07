@@ -156,6 +156,8 @@ Resources:
             Ref: sumoSNSTopic
     Type: AWS::S3::Bucket
   KinesisFirehoseDeliveryStream:
+    DependsOn:
+    - KinesisDestinationS3Bucket
     Properties:
       DeliveryStreamName:
         Ref: DeliveryStreamName
@@ -271,7 +273,7 @@ Resources:
     Type: Custom::App
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/bdf46e8975fab609f4783fe864e59c3f
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/ad40bea6161a7953883e5a7feec08851
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7
