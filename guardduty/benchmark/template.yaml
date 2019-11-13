@@ -10,16 +10,21 @@ Globals:
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: sumo-guardduty-bench-mark
-    Description: sumo-guardduty-bench-mark
-    Author: user1
+    Name: sumologic-amazon-guardduty-benchmark
+    Description: This solution installs the Guardduty Benchmark App, creates collectors/sources in Sumo Logic platform and deploys the lambda function in your AWS account using configuration provided at the time of sam application deployment.
+    Author: SumoLogic
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: ".\/..\/..\/licence.txt"
-    ReadmeUrl: ".\/README.md"
-    Labels: ['tests']
-    HomePageUrl: https://github.com/user1/my-app-project
+    LicenseUrl: "./../../licence.txt"
+    ReadmeUrl: "./README.md"
+    Labels:
+    - lambda
+    - sumologic
+    - serverless
+    - guarduty
+    - benchmark
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
 
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -110,10 +115,10 @@ Resources:
     Properties:
       Handler: main.handler
       Runtime: python3.7
-      CodeUri: "..\/..\/sumologic-app-utils/src/"
+      CodeUri: "../../sumologic-app-utils/src/"
       MemorySize: 128
       Timeout: 300
-        
+
 
   SumoHostedCollector:
     Type: Custom::Collector
@@ -164,4 +169,3 @@ Outputs:
     GuarddutyBenchmarkAppFolder:
       Description: "Folder Name"
       Value: !GetAtt SumoGuardDutyBenchmarkApp.APP_FOLDER_NAME
-

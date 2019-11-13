@@ -8,8 +8,8 @@ Metadata:
     Description: Adds S3 source in SumoLogic.
     Author: user1
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: ".\/..\/licence.txt"
-    ReadmeUrl: ".\/README.md"
+    LicenseUrl: "./../licence.txt"
+    ReadmeUrl: "./README.md"
     Labels:
     - s3 source
     HomePageUrl: https://github.com/user1/my-app-project
@@ -245,7 +245,7 @@ Resources:
     Properties:
       Handler: main.handler
       Runtime: python3.7
-      CodeUri: "..\/sumologic-app-utils/src/"
+      CodeUri: "../sumologic-app-utils/src/"
       MemorySize: 128
       Timeout: 300
       

@@ -4,16 +4,20 @@ Description: An AWS Serverless Specification template describing your function.
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: sumo-security-hub
+    Name: sumologic-amazon-security-hub
     Description: Sumologic AWS Security Hub Application.
-    Author: user1
+    Author: SumoLogic
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: ".\/..\/licence.txt"
-    ReadmeUrl: ".\/README.md"
-    Labels: ['tests']
-    HomePageUrl: https://github.com/user1/my-app-project
+    LicenseUrl: "./../licence.txt"
+    ReadmeUrl: "./README.md"
+    Labels:
+    - lambda
+    - sumologic
+    - serverless
+    - securityhub
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
 
 Parameters:
   EnableSecurityHub:
@@ -92,7 +96,7 @@ Resources:
     Properties:
       Handler: main.handler
       Runtime: python3.7
-      CodeUri: "..\/sumologic-app-utils/src/"
+      CodeUri: "../sumologic-app-utils/src/"
       MemorySize: 128
       Timeout: 300
 

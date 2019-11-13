@@ -1,4 +1,4 @@
-# sumologic-cloudtrail
+# sumologic-amazon-cloudtrail
 
 This solution installs the CloudTrail App, creates collectors/sources in Sumo Logic platform and deploys the resources in your AWS account using configuration provided at the time of SAM application deployment.
 
@@ -20,7 +20,7 @@ This solution installs the CloudTrail App, creates collectors/sources in Sumo Lo
 ## Setup:
 1.	Generate Access key from sumologic console as per docs.
 2.	Go to https://serverlessrepo.aws.amazon.com/applications.
-3.	Search for sumologic-cloud-trail and click on deploy.
+3.	Search for sumologic-amazon-cloudtrail and click on deploy.
 4.	In the Configure application parameters panel, enter the following parameters
     -	Access ID(Required): Sumo Logic Access ID generated from Step 1
     -	Access Key(Required): Sumo Logic Access Key generated from Step 1

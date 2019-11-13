@@ -4,29 +4,31 @@ Description: A CloudFormation template that creates the required AWS resources f
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: sumo-amazon-pci-compliance-for-vpc-flow
+    Name: sumologic-amazon-pci-compliance-for-vpc-flow
     Description: Sumologic PCI Compliance for Amazon VPC Flow Application.
-    Author: user1
+    Author: SumoLogic
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: ".\/..\/licence.txt"
-    ReadmeUrl: ".\/README.md"
+    LicenseUrl: "./../licence.txt"
+    ReadmeUrl: "./README.md"
     Labels:
-    - PCICompliance
-    HomePageUrl: https://github.com/user1/my-app-project
+      - lambda
+      - sumologic
+      - serverless
+      - vpc
+      - PCICompliance
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
 
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      -
-        Label:
+      - Label:
           default: "Sumo Logic Deployment Configuration"
         Parameters:
           - SumoDeployment
           - SumoAccessID
           - SumoAccessKey
-      -
-        Label:
+      - Label:
           default: "Sumo Logic Collector and Source Configuration"
         Parameters:
           - CollectorName
@@ -38,8 +40,7 @@ Metadata:
           - ExcludeRuleName
           - ExcludeRule
           - PCIVpcFlowAppSourceCategory
-      -
-        Label:
+      - Label:
           default: "S3 Configuration"
         Parameters:
           - LogsTargetS3BucketName
@@ -59,7 +60,7 @@ Metadata:
         default: "Source Category"
       PathExpression:
         default: "Path Expression"
-      
+
       RemoveSumoResourcesOnDeleteStack:
         default: "Remove Sumo Resources On Delete Stack"
       ExternalID:
@@ -132,7 +133,7 @@ Conditions:
   CreateBucket: !Equals [ !Ref CreateTargetS3Bucket, "yes" ]
 
 Resources:
-  
+
   sumoS3SourceStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -152,8 +153,8 @@ Resources:
         MultilineProcessingEnabled: False
         ExcludeRuleName: !Ref ExcludeRuleName
         ExcludeRule: !Ref ExcludeRule
-  
-  
+
+
   SumoAmazonS3AuditApp:
     Type: Custom::App
     Properties:

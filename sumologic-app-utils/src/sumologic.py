@@ -8,7 +8,7 @@ except ImportError:
     import http.cookiejar as cookielib
 
 DEFAULT_VERSION = 'v1'
-SLEEP_TIME = 1
+SLEEP_TIME = 7
 
 
 class SumoLogic(object):
@@ -47,7 +47,6 @@ class SumoLogic(object):
         return self.endpoint+'/%s' % version
 
     def delete(self, method, params=None, version=DEFAULT_VERSION):
-        time.sleep(SLEEP_TIME)
         endpoint = self.get_versioned_endpoint(version)
         r = self.session.delete(endpoint + method, params=params)
         if 400 <= r.status_code < 600:
@@ -56,7 +55,6 @@ class SumoLogic(object):
         return r
 
     def get(self, method, params=None, version=DEFAULT_VERSION):
-        time.sleep(SLEEP_TIME)
         endpoint = self.get_versioned_endpoint(version)
         r = self.session.get(endpoint + method, params=params)
         if 400 <= r.status_code < 600:
@@ -65,7 +63,6 @@ class SumoLogic(object):
         return r
 
     def post(self, method, params, headers=None, version=DEFAULT_VERSION):
-        time.sleep(SLEEP_TIME)
         endpoint = self.get_versioned_endpoint(version)
         r = self.session.post(endpoint + method, data=json.dumps(params), headers=headers)
         if 400 <= r.status_code < 600:
@@ -74,7 +71,6 @@ class SumoLogic(object):
         return r
 
     def put(self, method, params, headers=None, version=DEFAULT_VERSION):
-        time.sleep(SLEEP_TIME)
         endpoint = self.get_versioned_endpoint(version)
         r = self.session.put(endpoint + method, data=json.dumps(params), headers=headers)
         if 400 <= r.status_code < 600:
@@ -216,6 +212,7 @@ class SumoLogic(object):
         return self.get('/content/folders/%s/import/%s/status' % (folder_id, job_id), version='v2')
 
     def install_app(self, app_id, content):
+        time.sleep(SLEEP_TIME)
         return self.post('/apps/%s/install' % (app_id), params=content)
 
     def check_app_install_status(self, app_id, job_id):

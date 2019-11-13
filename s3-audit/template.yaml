@@ -4,17 +4,20 @@ Description: A CloudFormation template that creates a role for authenticating wi
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: sumo-amazon-s3-audit-app
-    Description: SumoLogic Amazon S3 Audit Application
-    Author: user1
+    Name: sumologic-amazon-s3-audit
+    Description: This solution creates resources for processing and sending Amazon S3 Audit logs to Sumo logic.
+    Author: SumoLogic
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: ".\/..\/licence.txt"
-    ReadmeUrl: ".\/README.md"
+    LicenseUrl: "./../licence.txt"
+    ReadmeUrl: "./README.md"
     Labels:
-    - S3Audit
-    HomePageUrl: https://github.com/user1/my-app-project
+    - lambda
+    - sumologic
+    - serverless
+    - s3audit
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
 
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -56,7 +59,7 @@ Metadata:
         default: "Source Category"
       PathExpression:
         default: "Path Expression"
-      
+
       RemoveSumoResourcesOnDeleteStack:
         default: "Remove Sumo Resources On Delete Stack"
       ExternalID:
@@ -144,14 +147,14 @@ Resources:
               - s3:ListBucketVersions
               - s3:ListBucket
             Resource:
-              - !Sub 
+              - !Sub
                 - arn:aws:s3:::${S3bucketName}
                 - { S3bucketName: !Ref AccessLogsTargetS3BucketName }
               - !Sub
                 - arn:aws:s3:::${S3bucketName}/*
                 - { S3bucketName: !Ref AccessLogsTargetS3BucketName  }
-              
-  
+
+
   TargetS3Bucket:
     Type: AWS::S3::Bucket
     Condition: CreateBucket
@@ -170,7 +173,7 @@ Resources:
   sumoSNSSubscription:
     Type: 'AWS::SNS::Subscription'
     Properties:
-      TopicArn: 
+      TopicArn:
         Ref: sumoS3AuditTopic
       Endpoint: !GetAtt SumoS3AuditSource.SUMO_ENDPOINT
       Protocol: https
@@ -210,7 +213,7 @@ Resources:
     Properties:
       Handler: main.handler
       Runtime: python3.7
-      CodeUri: "..\/sumologic-app-utils/src/"
+      CodeUri: "../sumologic-app-utils/src/"
       MemorySize: 128
       Timeout: 300
 
@@ -255,8 +258,8 @@ Resources:
       SumoAccessID: !Ref SumoAccessID
       SumoAccessKey: !Ref SumoAccessKey
       SumoDeployment: !Ref SumoDeployment
-      
-      
+
+
 
 Outputs:
   SumoRoleArn:
@@ -266,4 +269,3 @@ Outputs:
   SumoEndpoint:
     Description: SNS Subscription Endpoint
     Value: !GetAtt SumoS3AuditSource.SUMO_ENDPOINT
-

@@ -4,17 +4,20 @@ Description: A CloudFormation template that creates a role for authenticating wi
 
 Metadata:
   AWS::ServerlessRepo::Application:
-    Name: sumo-threat-intel-for-aws-app
+    Name: sumologic-amazon-threat-intel
     Description: SumoLogic Threat Intel for AWS Application
-    Author: user1
+    Author: SumoLogic
     SpdxLicenseId: Apache-2.0
-    LicenseUrl: ".\/..\/licence.txt"
-    ReadmeUrl: ".\/README.md"
+    LicenseUrl: "./../licence.txt"
+    ReadmeUrl: "./README.md"
     Labels:
+    - lambda
+    - sumologic
+    - serverless
     - Threatintel
-    HomePageUrl: https://github.com/user1/my-app-project
+    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
     SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
+    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
 
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -30,7 +33,7 @@ Metadata:
         Label:
           default: "Sumo Logic Threat Intel for AWS App Configuration"
         Parameters:
-          - CloudTrialSourceCategory
+          - CloudTrailSourceCategory
           - VPCSourceCategory
           - ELBSourceCategory 
           
@@ -57,8 +60,8 @@ Parameters:
   VPCSourceCategory:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-  
-  CloudTrialSourceCategory:
+
+  CloudTrailSourceCategory:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
   SumoAccessID:
@@ -91,7 +94,7 @@ Resources:
     Properties:
       Handler: main.handler
       Runtime: python3.7
-      CodeUri: "..\/sumologic-app-utils/src/"
+      CodeUri: "../sumologic-app-utils/src/"
       MemorySize: 128
       Timeout: 300
 
@@ -106,7 +109,7 @@ Resources:
       AppId: "cff3b4a2-b356-4ee3-beda-d7b5a9184fcf"
       RemoveOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
       AppSources:
-        awscloudtrail: !Sub "_sourceCategory=${CloudTrialSourceCategory}"
+        awscloudtrail: !Sub "_sourceCategory=${CloudTrailSourceCategory}"
         awsvpc: !Sub "_sourceCategory=${VPCSourceCategory}"
         awselb: !Sub "_sourceCategory=${ELBSourceCategory}"
       SumoAccessID: !Ref SumoAccessID

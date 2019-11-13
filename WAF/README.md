@@ -1,50 +1,32 @@
-# sumologic-aws-waf-application.
+# sumologic-amazon-waf
 
-This solution Create an Amazon Kinesis Data Firehose Delivery Stream with ExtendedS3DestinationConfiguration to deliver the logs to S3 bucket and creates the S3 Source, collector, install the "AWS WAF" App in "Personal" Folder of your SumoLogic.
+This solution creates resources for processing and sending Amazon WAF logs to Sumo logic.
 
-Made by Sumo Logic AppDev Team. Available on the [AWS Serverless Application Repository](https://aws.amazon.com/serverless)
+Made with ❤️ by Sumo Logic AppDev Team. Available on the [AWS Serverless Application Repository](https://aws.amazon.com/serverless)
 
-![SumoLogic WAF App](https://github.com/madhusarma/sumo-aws-apps/blob/master/assets/WAF.png)
 ## Setup
 1. Go to https://serverlessrepo.aws.amazon.com/applications.
-2. Search for sumologic-aws-waf and click on deploy.
-4. Provide the parameter values.
-5. Click on Deploy
+2. Search for sumologic-amazon-waf and click on deploy.
+3. In Configure application parameters panel paste the HTTP collector endpoint previously configured.
+    - KinesisDestinationS3BucketName - Enter the S3 bucket name to collect logs for WAFs you need to monitor.
+    - CreateKinesisDestinationS3Bucket - Yes if you need SAM app to create the bucket for you else no.
+    - CompressionFormat - compression format for your S3 bucket.
+    - S3BackupMode - If backup needed.
+    - DeliveryStreamName - Kinesis Delivery stream name for your WAF.
+    - RemoveSumoResourcesOnDeleteStack - True if you need to remove all the resource created when SAM app was installed else false.
+    - SumoDeployment - Enter the SumoLogic deployment.
+    - SumoAccessID - Enter the SumoLogic Access ID for the entered deployment.
+    - SumoAccessKey - Enter the SumoLogic Access Key for the entered deployment.
+    - CollectorName - Enter or update the existing SumoLogic collector name.
+    - ExternalID - Enter the account ID in format as deployment:accountID.
+    - PathExpression - Enter the path expression for log files you want to collect.
+    - SourceName - Enter the Source Name.
+    - SourceCategoryName - Enter the Source Category.
+4. Click on Deploy
 
-## Application Parameters.
-Parameters List:
-
-- Access ID(Required): Sumo Logic Access ID of your Sumo Logic account.
-- Access Key(Required): Sumo Logic Access Key of your Sumo Logic account.
-- Deployment (Required): Sumo Logic Deployment name.
-- Collector Name: Enter the name of the Hosted Collector which will be created in Sumo Logic.
-- Source Name: Enter the name of the Source which will be created within the collector.
-- Source Category: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-- Path Expression: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log.
-- ExternalID : An ID used in the trust policy to designate who can assume the role, formatted as deployment:accountId. Eg. us1:0000000000000131
-- Name of the delivery stream: Name of the Kinesis Data Firehose Delivery Stream.
-- Remove Sumo Resources On Delete Stack: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is false.
-- Target BucketName: Log files target S3 bucket.
-- Do you want to create a target S3 bucket?: 
-    - If "yes", then it will creates the above S3 bucket.
-    - if "no", it will not cretae and use the existing bucket.
-
-## This will create the below resouces.
-- Creates the Kinesis Data Firehose Delivery Stream.
-- Add the IAM roles with S3 destination configuration.
-- Creates the S3 bucket(if required) in AWS to collect the logs.
-- Add IAM role to above S3 bucket, so that SumoLogic S3 source can assume role to read the log files.
-- Creates the SNS Policy,Topic and Add the https subscription to send the notification to SumoLogic, when logfile is added to S3 bucket.
-- Creates the Collector and S3 source in SumoLogic.
-- Install the "AWS WAF" App in your Sumologic "Personal" Folder.
 ## License
 
 Apache License 2.0 (Apache-2.0)
 
-
 ## Support
-Requests & issues should be filed on GitHub: https://github.com/SumoLogic/sumologic-aws-apps/issues
-
-
-
-
+Requests & issues should be filed on GitHub: https://github.com/SumoLogic/sumologic-aws-lambda/issues
