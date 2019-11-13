@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo -e 'Welcome to SumoLogic Amazon Apps'
-sam_s3_bucket=sumologic-appdev-aws-sam-apps
+read -p 'Enter the S3 bucket name to upload the SAM applications: '  sam_s3_bucket
 echo 'Enter the Sumlogic access details'
 
 echo 'Please enter the app number to publish(1/2....):'
