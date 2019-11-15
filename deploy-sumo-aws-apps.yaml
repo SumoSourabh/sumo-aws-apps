@@ -8,7 +8,7 @@ Metadata:
     ParameterGroups:
       -
         Label:
-          default: "Sumo Logic Deployment Configuration"
+          default: "Sumo Logic Deployment Configuration (Required)"
         Parameters:
           - SumoDeployment
           - SumoAccessID
@@ -17,7 +17,7 @@ Metadata:
           - SumoOrganizationId
       -
         Label:
-          default: "Select the Sumo Apps that you want to Deploy:"
+          default: "Select the Sumo Logic Apps that you want to Deploy:"
         Parameters:
           - InstallGuardDutyApp
           - InstallGuardDutyBenchmarkApp
@@ -30,21 +30,21 @@ Metadata:
           - InstallCISFoundationsApp
           - InstallPCICloudTrailApp
           - InstallPCIVPCFlowLogsApp
-          
+
       -
         Label:
-          default: "Sumo Logic GuardDuty Collector/Source/App Configuration"
+          default: "Sumo Logic Amazon GuardDuty App Configuration"
         Parameters:
           - SourceCategoryName
           
       -   
         Label:
-          default: "Sumo Logic Amazon GuardDuty Benchmark Collector/Source/App Configuration"
+          default: "Sumo Logic Amazon GuardDuty Benchmark App Configuration"
         Parameters:
           - BenchmarkSourceCategoryName
       -   
         Label:
-          default: "Sumo Logic Amazon VPC Flow Logs Collector/Source/App Configuration"
+          default: "Sumo Logic Amazon VPC Flow Logs App Configuration"
         Parameters:
           - VPCFlowLogsTargetS3BucketName
           - VPCFlowLogsCreateTargetS3Bucket
@@ -55,7 +55,7 @@ Metadata:
           
       -   
         Label:
-          default: "Sumo Logic Amazon S3 Audit App Collector/Source Configuration"
+          default: "Sumo Logic Amazon S3 Audit App Configuration"
         Parameters:
           - S3AuditLogsTargetS3BucketName
           - S3AuditCreateTargetS3Bucket
@@ -63,11 +63,10 @@ Metadata:
           - S3AuditPathExpression
       -   
         Label:
-          default: "Sumo Logic AWS WAF App Collector/Source Configuration"
+          default: "Sumo Logic AWS WAF App Configuration"
         Parameters:
           - KinesisDestinationS3BucketName
           - CreateKinesisDestinationS3Bucket
-          - WAFCreateTargetS3Bucket
           - WAFSourceCategoryName
           - WAFPathExpression
           - DeliveryStreamName
@@ -75,7 +74,7 @@ Metadata:
          
       -   
         Label:
-          default: "Sumo Logic AWS CloudTrail Collector/Source/App Configuration"
+          default: "Sumo Logic AWS CloudTrail App Configuration"
         Parameters:
           - CloudTrailTargetS3BucketName
           - CreateCloudTrailTargetS3Bucket
@@ -84,7 +83,7 @@ Metadata:
 
       -   
         Label:
-          default: "Sumo Logic AWS Security Hub App Collector/Source Configuration"
+          default: "Sumo Logic AWS Security Hub App Configuration"
         Parameters:
           - EnableSecurityHub
           - SecurityHubLogsS3BucketName
@@ -95,7 +94,7 @@ Metadata:
       
       -   
         Label:
-          default: "Sumo Logic Threat Intel For AWS App Collector/Source Configuration"
+          default: "Sumo Logic Threat Intel For AWS App Configuration"
         Parameters:
           - CloudTrailSourceCategoryName
           - VPCFlowLogsSourceCategoryName
@@ -103,7 +102,7 @@ Metadata:
 
       -   
         Label:
-          default: "Sumo Logic AWS CIS Foundations Benchmark Collector/Source/App Configuration"
+          default: "Sumo Logic CIS AWS Foundations Benchmark App Configuration"
         Parameters:
           - CISFoundationsTargetS3BucketName
           - CISFoundationsSourceCategoryName
@@ -111,7 +110,7 @@ Metadata:
           - CISFoundationsPathExpression
       -
         Label:
-          default: "Sumo Logic PCI Compliance for AWS CloudTrail App. Details are populated from CloudTrail Configuration."
+          default: "Sumo Logic PCI Compliance For AWS CloudTrail App Configuration"
         Parameters:
           - CloudTrailSourceCategoryName
           - CloudTrailPathExpression
@@ -120,7 +119,7 @@ Metadata:
 
       -
         Label:
-          default: "Sumo Logic PCI Compliance for Amazon VPC Flow Logs App. Details are populated from VPC Flow Logs Configuration."
+          default: "Sumo Logic PCI Compliance For Amazon VPC Flow App Configuration"
         Parameters:
           - VPCFlowLogsSourceCategoryName
           - VPCFlowLogsPathExpression
@@ -130,65 +129,104 @@ Metadata:
     
     ParameterLabels:
       SumoDeployment:
-        default: "Deployment Name"
+        default: "Sumo Logic Deployment Name"
       SumoAccessID:
-        default: "Access ID"
+        default: "Sumo Logic Access ID"
       SumoAccessKey:
-        default: "Access Key"
+        default: "Sumo Logic Access Key"
       RemoveSumoResourcesOnDeleteStack:
-        default: "Delete SumoLogic Resources when stack is deleted."
+        default: "Delete Sumo Logic Resources when stack is deleted"
       SumoOrganizationId:
-        default: "Organization Id"
+        default: "Sumo Logic Organization Id"
       InstallGuardDutyApp:
-        default: "Install GuardDuty App"
+        default: "Install Amazon GuardDuty App"
       InstallGuardDutyBenchmarkApp:
-        default: "Install GuardDuty Benchmark App"
+        default: "Install Amazon GuardDuty Benchmark App"
       InstallVPCFlowLogsApp:
-        default: "Install VPC Flow Logs App"
+        default: "Install Amazon VPC Flow Logs App"
       InstallWAFApp:
-        default: "Install WAF App"
+        default: "Install AWS WAF App"
       InstallS3AuditApp:
-        default: "Install S3Audit App"
+        default: "Install Amazon S3 Audit App"
       InstallSecurityHub:
-        default: "Install SecurityHub App"
+        default: "Install AWS Security Hub App"
       InstallThreatIntelForAWS:
-        default: "Install Threat Intel For AWS App"
+        default: "Install Threat Intel for AWS App"
       InstallPCICloudTrailApp:
-        default: "Install PCI compliance for CloudTrail App"
+        default: "Install PCI Compliance For AWS CloudTrail App"
       InstallPCIVPCFlowLogsApp:
-        default: "Install PCI compliance for VPC App"
+        default: "Install PCI Compliance For Amazon VPC Flow App"
       InstallCloudTrailApp:
-        default: "Install CloudTrail App"
+        default: "Install AWS CloudTrail App"
       InstallCISFoundationsApp:
-        default: "Install CIS Foundations App"
-      CollectorName:
-        default: "Collector Name"
-      SourceName: 
-        default: "Source Name"
+        default: "Install CIS AWS Foundations Benchmark App"
       SourceCategoryName:
-        default: "Source Category"
-      BenchmarkCollectorName:
-        default: "Collector Name"
-      BenchmarkSourceName:
-        default: "Source Name"
+        default: "Source Category Name"
       BenchmarkSourceCategoryName:
-        default: "Source Category"
-      VPCFlowLogsCollectorName:
-        default: "Collector Name"
-      VPCFlowLogsSourceName:
-        default: "Source Name"
+        default: "Source Category Name"
       VPCFlowLogsTargetS3BucketName:
-        default: "Target S3 Bucket Name"
+        default: "S3 Bucket Name for Logs"
       VPCFlowLogsCreateTargetS3Bucket:
-        default: "Create Target S3 Bucket"
+        default: "Create S3 Bucket for Logs"
       VPCFlowLogsSourceCategoryName:
-        default: "Source Category"
+        default: "Source Category Name"
       VPCFlowLogsPathExpression:
         default: "Path Expression"
       VPCFlowLogsExcludeRuleName:
         default: "Exclude Rule Name"
       VPCFlowLogsExcludeRule:
         default: "Exclude Rule"
+      S3AuditLogsTargetS3BucketName:
+        default: "S3 Bucket Name for Logs"
+      S3AuditCreateTargetS3Bucket:
+        default: "Create S3 Bucket for Logs"
+      S3AuditSourceCategoryName:
+        default: "Source Category Name"
+      S3AuditPathExpression:
+        default: "Path Expression"
+      KinesisDestinationS3BucketName:
+        default: "S3 Bucket Name for Logs"
+      CreateKinesisDestinationS3Bucket:
+        default: "Create S3 Bucket for Logs"
+      WAFSourceCategoryName:
+        default: "Source Category Name"
+      WAFPathExpression:
+        default: "Path Expression"
+      DeliveryStreamName:
+        default: "Kinesis Delivery Stream Name"
+      CompressionFormat:
+        default: "Compression Format"
+      EnableSecurityHub:
+        default: "Enable Security Hub"
+      SecurityHubLogsS3BucketName:
+        default: "S3 Bucket Name for Logs"
+      SecurityHubCreateS3Bucket:
+        default: "Create S3 Bucket for Logs"
+      SecurityHubPathExpression:
+        default: "Path Expression"
+      SecurityHubConnectionName:
+        default: "Security Hub Connection Name"
+      SecurityHubSourceCategoryName:
+        default: "Source Category Name"
+      CloudTrailTargetS3BucketName:
+        default: "S3 Bucket Name for Logs"
+      CreateCloudTrailTargetS3Bucket:
+        default: "Create S3 Bucket for Logs"
+      CloudTrailSourceCategoryName:
+        default: "Source Category Name"
+      CloudTrailPathExpression:
+        default: "Path Expression"
+      ELBSourceCategory:
+        default: "Sumo Logic ELB App Source Category Name"
+      CISFoundationsTargetS3BucketName:
+        default: "S3 Bucket Name for Logs"
+      CISFoundationsSourceCategoryName:
+        default: "Source Category Name"
+      CreateCISFoundationsTargetS3Bucket:
+        default: "Create S3 Bucket for Logs"
+      CISFoundationsPathExpression:
+        default: "Path Expression"
+
 Parameters:
   InstallGuardDutyApp:
     Type: String
@@ -198,8 +236,11 @@ Parameters:
       - "no"
   SourceCategoryName:
     Type: String
-    Default: Labs/AWS/Guardduty
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
+    Default: AWS/QuickStart/GuardDuty
+
   SumoOrganizationId:
+    Description: The Account Overview page displays information about your Sumo Logic organization.
     Type: String
   SumoAccessID:
     Type: String
@@ -215,13 +256,13 @@ Parameters:
       - jp
       - us2
       - us1
-    Description: "Enter au, ca, de, eu, jp, us2, or us1"
+    Description: "Enter au, ca, de, eu, jp, us2, or us1."
   RemoveSumoResourcesOnDeleteStack:
     AllowedValues:
       - true
       - false
     Default: true
-    Description: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is false.
+    Description: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is true.
     Type: String
 
   InstallGuardDutyBenchmarkApp:
@@ -230,10 +271,10 @@ Parameters:
     AllowedValues:
       - "yes"
       - "no"
-  
   BenchmarkSourceCategoryName:
     Type: String
-    Default: Labs/AWS/Guardduty/benchmark
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
+    Default: AWS/QuickStart/Guardduty/benchmark
 
   InstallCloudTrailApp:
     Type: String
@@ -241,19 +282,18 @@ Parameters:
     AllowedValues:
       - "yes"
       - "no"
-  
   CloudTrailSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: Labs/cloudtrail
+    Default: AWS/QuickStart/cloudtrail
   CloudTrailPathExpression:
     Type: String
-    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log or *.
     Default: "*"
   CloudTrailTargetS3BucketName:
     Type: String
     Default: "quickstart-cloudtrail-logs"
-    Description: S3 access logs target buket name.
+    Description: Provide the bucket name where the logs will be stored and then collected by Sumo Logic source.
   CreateCloudTrailTargetS3Bucket:
     Type: String
     Default: "yes"
@@ -269,15 +309,15 @@ Parameters:
   CISFoundationsSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: Labs/CIS
+    Default: AWS/QuickStart/CIS
   CISFoundationsPathExpression:
     Type: String
-    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log or *.
     Default: "*"
   CISFoundationsTargetS3BucketName:
     Type: String
     Default: "quickstart-cis-logs"
-    Description: S3 access logs target buket name.
+    Description: Provide the bucket name where the logs will be stored and then collected by Sumo Logic source.
   CreateCISFoundationsTargetS3Bucket:
     Type: String
     Default: "yes"
@@ -293,11 +333,11 @@ Parameters:
   VPCFlowLogsSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: Labs/vpc
+    Default: AWS/QuickStart/vpc
   VPCFlowLogsTargetS3BucketName:
     Type: String
     Default: "quickstart-vpc-logs"
-    Description: S3 access logs target buket name.
+    Description: Provide the bucket name where the logs will be stored and then collected by Sumo Logic source.
   VPCFlowLogsCreateTargetS3Bucket:
     Type: String
     Default: "yes"
@@ -305,10 +345,11 @@ Parameters:
     Description: "Do you want to create a target S3 bucket?"
   VPCFlowLogsPathExpression:
     Type: String
-    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log or *.
     Default: "*"
   VPCFlowLogsExcludeRuleName:
     Type: String
+    Description: Processing rule for Sumo Logic Source.
     Default: Exclude VPC File Flow headers
   VPCFlowLogsExcludeRule:
     Type: String
@@ -321,15 +362,14 @@ Parameters:
     AllowedValues:
       - "yes"
       - "no"
-  
   S3AuditSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: Labs/s3audit
+    Default: AWS/QuickStart/s3audit
   S3AuditLogsTargetS3BucketName:
     Type: String
     Default: "quickstart-s3-audit-logs"
-    Description: S3 access logs target buket name.
+    Description: Provide the bucket name where the logs will be stored and then collected by Sumo Logic source.
   S3AuditCreateTargetS3Bucket:
     Type: String
     Default: "yes"
@@ -337,7 +377,7 @@ Parameters:
     Description: "Do you want to create a target S3 bucket?"
   S3AuditPathExpression:
     Type: String
-    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log or *.
     Default: "*"
 
   InstallWAFApp:
@@ -346,16 +386,14 @@ Parameters:
     AllowedValues:
       - "yes"
       - "no"
-  
   WAFSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: "Labs/waf"
-   
+    Default: "AWS/QuickStart/waf"
   KinesisDestinationS3BucketName:
     Type: String
     Default: "quickstart-waf-kinesis-logs"
-    Description: Kinesis destination bucket.
+    Description: Provide the bucket name where the logs will be stored and then collected by Sumo Logic source.
   CreateKinesisDestinationS3Bucket:
     Type: String
     Default: "yes"
@@ -363,7 +401,7 @@ Parameters:
     Description: "Do you want to create a target S3 bucket?"
   WAFPathExpression:
     Type: String
-    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log or *.
     Default: "*"
   DeliveryStreamName:
     Type: String
@@ -380,23 +418,21 @@ Parameters:
     Type: String
     Default: "no"
     AllowedValues: ["yes", "no"]
-  
-  ConnectionName:
+  SecurityHubConnectionName:
     Type: String
     Default: security-hub-webhook-connection
   SecurityHubSourceCategoryName:
     Type: String
     Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
-    Default: Labs/hub
- 
+    Default: AWS/QuickStart/hub
   SecurityHubPathExpression:
     Type: String
     Default: "*"
-  
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log or *.
   SecurityHubLogsS3BucketName:
     Type: String
     Default: "quickstart-hub-logs"
-    Description: Security Hub Collector destination bucket.
+    Description: Provide the bucket name where the logs will be stored and then collected by Sumo Logic source.
   SecurityHubCreateS3Bucket:
     Type: String
     Default: "yes"
@@ -411,7 +447,8 @@ Parameters:
       - "no"
   ELBSourceCategory:
     Type: String
-    Default: "/AWS/ELB"
+    Description: Category name for your Sumo Logic ELB app
+    Default: "*elb*"
 
   InstallPCICloudTrailApp:
     Type: String
@@ -513,7 +550,7 @@ Resources:
         SourceName: "AmazonGuardDutyBenchmark"
         SumoAccessID: !Ref SumoAccessID
         SumoAccessKey: !Ref SumoAccessKey
-        SumoDeployment: !Ref SumoDeployment  
+        SumoDeployment: !Ref SumoDeployment
   
   sumocloudtrail: 
     Condition: InstallCloudTrailCondition
@@ -583,7 +620,7 @@ Resources:
         RemoveSumoResourcesOnDeleteStack: !Ref RemoveSumoResourcesOnDeleteStack
         EnableSecurityHub: !Ref EnableSecurityHub
         CollectorName: "QuickStart-AWSSecurityHub"
-        ConnectionName: !Ref ConnectionName
+        ConnectionName: !Ref SecurityHubConnectionName
         S3BucketName: !Ref SecurityHubLogsS3BucketName
         CreateTargetS3Bucket: !Ref SecurityHubCreateS3Bucket
         SourceCategoryName: !Ref SecurityHubSourceCategoryName
@@ -646,16 +683,4 @@ Resources:
         PathExpression: !Ref VPCFlowLogsPathExpression
         ExternalID: !Sub "${SumoDeployment}:${SumoOrganizationId}"
         SourceCategory: !Ref VPCFlowLogsSourceCategoryName
-
-
-        
-
-  
-  
-  
-  
-  
-  
-  
-  
 
