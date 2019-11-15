@@ -564,22 +564,32 @@ class App(Resource):
         return response
         print("job status: %s" % response.text)
 
+    def _create_or_fetch_quickstart_apps_parent_folder(self):
+        response = self.sumologic_cli.get_personal_folder()
+        folder_name = "SumoLogic Amazon QuickStart Apps "+str(datetime.now().strftime("%d-%m-%Y"))
+        description = "This folder contains all the apps created as a part of SumoLogic Amazon QuickStart Apps."
+        if "children" in response.json():
+            for children in response.json()["children"]:
+                if "name" in children and children["name"] == folder_name:
+                    return children["id"]
+
+        folder = self.sumologic_cli.create_folder(folder_name, description, response.json()['id'])
+        return folder.json()["id"]
 
     def create(self, appid, appname, source_params, *args, **kwargs):
         # Add  retry if folder sync fails
         if appname == "Amazon GuardDuty Benchmark" and not self.is_enterprise_or_trial_account():
             raise Exception("%s is available to Enterprise or Trial Account Type only." % appname)
 
-        response = self.sumologic_cli.get_personal_folder()
-        personal_folder_id = response.json()['id']
+        folder_id = self._create_or_fetch_quickstart_apps_parent_folder()
         content = {'name': appname+datetime.now().strftime("_%d-%b-%Y_%H:%M:%S.%f"), 'description': appname, 'dataSourceValues': source_params,
-                   'destinationFolderId': personal_folder_id}
+                   'destinationFolderId': folder_id}
         # app_folder_id = self._get_app_folder(content, personal_folder_id)
 
         response = self.sumologic_cli.install_app(appid, content)
         job_id = response.json()["id"]
         print("installed app %s: appFolderId: %s personalFolderId: %s jobId: %s" % (
-            appname, personal_folder_id, personal_folder_id, job_id))
+            appname, folder_id, folder_id, job_id))
         response = self._wait_for_app_install(appid, job_id)
         json_resp = json.loads(response.content)
         if(json_resp['status'] == 'Success'):
@@ -588,6 +598,7 @@ class App(Resource):
         else:
             print("%s installation failed." % appname)
             response.raise_for_status()
+
     def create_old(self, appname, source_params, *args, **kwargs):
         # Add  retry if folder sync fails
         if appname == "Amazon GuardDuty Benchmark" and not self.is_enterprise_or_trial_account():
