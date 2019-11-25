@@ -1,9 +1,23 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Conditions:
+  CreateAwsCloudTrail:
+    Fn::Equals:
+    - Ref: SumoSourceType
+    - AwsCloudTrail
   CreateBucket:
     Fn::Equals:
     - Ref: CreateTargetS3Bucket
     - 'yes'
+  CreateS3Audit:
+    Fn::Equals:
+    - Ref: SumoSourceType
+    - S3AuditSource
+  CreateS3Source:
+    Fn::Equals:
+    - Ref: SumoSourceType
+    - S3Source
+Description: "A CloudFormation template that creates a role for authenticating with\
+  \ Sumo\u2019s AWS integrations."
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -13,35 +27,35 @@ Metadata:
       - SumoDeployment
       - SumoAccessID
       - SumoAccessKey
+      - RemoveSumoResourcesOnDeleteStack
     - Label:
-        default: Sumo Logic Collection Configuration
+        default: Sumo Logic Collector and Source Configuration
       Parameters:
       - CollectorName
       - SourceName
-      - SourceCategoryName
-      - PathExpression
-      - RemoveSumoResourcesOnDeleteStack
-    - Label:
-        default: AWS Resources Configuration
-      Parameters:
-      - ExternalID
-      - CISTargetS3BucketName
+      - LogsTargetS3BucketName
       - CreateTargetS3Bucket
+      - SourceCategory
+      - PathExpression
+      - ExternalID
+      - MultilineProcessingEnabled
+      - ExcludeRuleName
+      - ExcludeRule
     ParameterLabels:
-      CISTargetS3BucketName:
-        default: Target BucketName
       CollectorName:
         default: Collector Name
       CreateTargetS3Bucket:
         default: Do you want to create a target S3 bucket?
       ExternalID:
         default: IAM Role ExternalID
+      LogsTargetS3BucketName:
+        default: Target BucketName
       PathExpression:
         default: Path Expression
       RemoveSumoResourcesOnDeleteStack:
         default: Remove Sumo Resources On Delete Stack
-      SourceCategoryName:
-        default: Source Category Name
+      SourceCategory:
+        default: Source Category
       SourceName:
         default: Source Name
       SumoAccessID:
@@ -51,27 +65,35 @@ Metadata:
       SumoDeployment:
         default: Deployment Name
   AWS::ServerlessRepo::Application:
-    Author: SumoLogic
-    Description: SumoLogic CIS AWS Foundations Benchmark Application
-    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
+    Author: user1
+    Description: Adds S3 source in SumoLogic.
+    HomePageUrl: https://github.com/user1/my-app-project
     Labels:
-    - lambda
-    - sumologic
-    - serverless
-    - CIS
+    - s3 source
     LicenseUrl: s3://sumologic-appdev-aws-sam-apps/ed96ade3777f01f35ff19f5db1a81893
-    Name: sumologic-amazon-cis-foundations
-    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/adf5a36cbf55cb0bfe26ec4275d2a91d
+    Name: sumologic-s3-source-installer
+    ReadmeUrl: s3://sumologic-appdev-aws-sam-apps/d41d8cd98f00b204e9800998ecf8427e
     SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
+    SourceCodeUrl: https://github.com/user1/my-app-project
     SpdxLicenseId: Apache-2.0
 Outputs:
-  SumoEndpoint:
+  SumoAppUtilsArn:
     Description: SNS Subscription Endpoint
     Value:
       Fn::GetAtt:
-      - SumoS3Source
-      - SUMO_ENDPOINT
+      - SumoAppUtils
+      - Arn
+  SumoEndpoint:
+    Description: SNS Subscription Endpoint
+    Value:
+      Fn::If:
+      - CreateAwsCloudTrail
+      - Fn::GetAtt:
+        - SumoAwsCloudTrailSource
+        - SUMO_ENDPOINT
+      - Fn::GetAtt:
+        - SumoS3Source
+        - SUMO_ENDPOINT
   SumoRoleArn:
     Description: ARN of the cretaed Role.
     Value:
@@ -79,11 +101,7 @@ Outputs:
       - SumoRole
       - Arn
 Parameters:
-  CISTargetS3BucketName:
-    Description: CIS foundtaions logs target bucket name.
-    Type: String
   CollectorName:
-    Default: CISFoundtaionsCollector
     Type: String
   CreateTargetS3Bucket:
     AllowedValues:
@@ -91,9 +109,23 @@ Parameters:
     - 'no'
     Default: 'no'
     Type: String
+  ExcludeRule:
+    Description: Exclude rule regexp
+    Type: String
+  ExcludeRuleName:
+    Type: String
   ExternalID:
     Description: An ID used in the trust policy to designate who can assume the role,
       formatted as deployment:accountId. Eg. us1:0000000000000131
+    Type: String
+  LogsTargetS3BucketName:
+    Description: S3 access logs target buket name.
+    Type: String
+  MultilineProcessingEnabled:
+    AllowedValues:
+    - true
+    - false
+    Default: true
     Type: String
   PathExpression:
     Description: Path expression to match one or more S3 objects. For example, ABC*.log
@@ -107,10 +139,11 @@ Parameters:
     Description: To delete collector, sources and app when stack is deleted, set this
       parameter to true. Default is false.
     Type: String
-  SourceCategoryName:
+  SourceCategory:
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access
+      . This data is queried using the '_sourceCategory' key name.
     Type: String
   SourceName:
-    Default: CISFoundtaionsSource
     Type: String
   SumoAccessID:
     Type: String
@@ -127,37 +160,62 @@ Parameters:
     - us1
     Description: Enter au, ca, de, eu, jp, us2, or us1
     Type: String
+  SumoSourceType:
+    AllowedValues:
+    - S3Source
+    - S3AuditSource
+    - AwsCloudTrail
+    Default: S3Source
+    Type: String
+  UseAutolineMatching:
+    AllowedValues:
+    - true
+    - false
+    Default: true
+    Type: String
 Resources:
   SumoAppUtils:
     Properties:
-      CodeUri: s3://sumologic-appdev-aws-sam-apps/9e708f3745286fb6b107bcf4e26211f8
+      CodeUri: s3://sumologic-appdev-aws-sam-apps/9f5a73b3acbabc173dc9b758895feb50
       Handler: main.handler
       MemorySize: 128
       Runtime: python3.7
       Timeout: 300
     Type: AWS::Serverless::Function
-  SumoCISAWSFoundationsBenchmarkApp:
+  SumoAwsCloudTrailSource:
+    Condition: CreateAwsCloudTrail
     Properties:
-      AppId: 9f630fe6-9253-4700-bb7e-36afc97b8cb6
-      AppName: CIS AWS Foundations Benchmark
-      AppSources:
-        paramId123:
-          Fn::Sub: _sourceCategory=${SourceCategoryName}
+      CollectorId:
+        Fn::GetAtt:
+        - SumoHostedCollector
+        - COLLECTOR_ID
+      PathExpression:
+        Ref: PathExpression
       Region:
         Ref: AWS::Region
       RemoveOnDeleteStack:
         Ref: RemoveSumoResourcesOnDeleteStack
+      RoleArn:
+        Fn::GetAtt:
+        - SumoRole
+        - Arn
       ServiceToken:
         Fn::GetAtt:
         - SumoAppUtils
         - Arn
+      SourceCategory:
+        Ref: SourceCategory
+      SourceName:
+        Ref: SourceName
       SumoAccessID:
         Ref: SumoAccessID
       SumoAccessKey:
         Ref: SumoAccessKey
       SumoDeployment:
         Ref: SumoDeployment
-    Type: Custom::App
+      TargetBucketName:
+        Ref: LogsTargetS3BucketName
+    Type: Custom::AwsCloudTrail
   SumoHostedCollector:
     Properties:
       CollectorName:
@@ -203,19 +261,18 @@ Resources:
             Effect: Allow
             Resource:
             - Fn::Sub:
-              - arn:aws:s3:::${CISTargetS3BucketName}
+              - arn:aws:s3:::${S3bucketName}
               - S3bucketName:
-                  Ref: CISTargetS3BucketName
+                  Ref: LogsTargetS3BucketName
             - Fn::Sub:
-              - arn:aws:s3:::${CISTargetS3BucketName}/*
+              - arn:aws:s3:::${S3bucketName}/*
               - S3bucketName:
-                  Ref: CISTargetS3BucketName
+                  Ref: LogsTargetS3BucketName
           Version: '2012-10-17'
         PolicyName: SumoPolicy
     Type: AWS::IAM::Role
   SumoS3Source:
-    DependsOn:
-    - sumoS3BucketPolicy
+    Condition: CreateS3Source
     Properties:
       CollectorId:
         Fn::GetAtt:
@@ -236,7 +293,7 @@ Resources:
         - SumoAppUtils
         - Arn
       SourceCategory:
-        Ref: SourceCategoryName
+        Ref: SourceCategory
       SourceName:
         Ref: SourceName
       SumoAccessID:
@@ -246,56 +303,34 @@ Resources:
       SumoDeployment:
         Ref: SumoDeployment
       TargetBucketName:
-        Ref: CISTargetS3BucketName
-    Type: Custom::AwsCloudTrail
+        Ref: LogsTargetS3BucketName
+      filters:
+      - filterType: Exclude
+        name:
+          Ref: ExcludeRuleName
+        regexp:
+          Ref: ExcludeRule
+      multilineProcessingEnabled:
+        Ref: MultilineProcessingEnabled
+      useAutolineMatching:
+        Ref: MultilineProcessingEnabled
+    Type: Custom::S3Source
   TargetS3Bucket:
     Condition: CreateBucket
-    DependsOn:
-    - sumoSNSpolicy
     Properties:
       BucketName:
-        Ref: CISTargetS3BucketName
+        Ref: LogsTargetS3BucketName
       NotificationConfiguration:
         TopicConfigurations:
         - Event: s3:ObjectCreated:Put
           Topic:
-            Ref: sumoSNSTopic
+            Ref: sumoS3SorceTopic
     Type: AWS::S3::Bucket
-  sumoCloudTrail:
-    DependsOn:
-    - sumoS3BucketPolicy
+  sumoS3SorceTopic:
     Properties:
-      IsLogging: true
-      IsMultiRegionTrail: false
-      S3BucketName:
-        Ref: CISTargetS3BucketName
-      TrailName:
-        Fn::Sub: SumoCIS-${AWS::StackName}
-    Type: AWS::CloudTrail::Trail
-  sumoS3BucketPolicy:
-    Properties:
-      Bucket:
-        Ref: CISTargetS3BucketName
-      PolicyDocument:
-        Statement:
-        - Action: s3:GetBucketAcl
-          Effect: Allow
-          Principal:
-            Service: cloudtrail.amazonaws.com
-          Resource:
-          - Fn::Sub: arn:aws:s3:::${CISTargetS3BucketName}
-          Sid: AWSCloudTrailAclCheck
-        - Action: s3:PutObject
-          Condition:
-            StringEquals:
-              s3:x-amz-acl: bucket-owner-full-control
-          Effect: Allow
-          Principal:
-            Service: cloudtrail.amazonaws.com
-          Resource:
-          - Fn::Sub: arn:aws:s3:::${CISTargetS3BucketName}/*
-          Sid: AWSCloudTrailWrite
-    Type: AWS::S3::BucketPolicy
+      TopicName:
+        Fn::Sub: SumoSNSTopic-${AWS::StackName}
+    Type: AWS::SNS::Topic
   sumoSNSSubscription:
     Properties:
       DeliveryPolicy:
@@ -308,29 +343,28 @@ Resources:
           numNoDelayRetries: 0
           numRetries: 40
       Endpoint:
-        Fn::GetAtt:
-        - SumoS3Source
-        - SUMO_ENDPOINT
+        Fn::If:
+        - CreateAwsCloudTrail
+        - Fn::GetAtt:
+          - SumoAwsCloudTrailSource
+          - SUMO_ENDPOINT
+        - Fn::GetAtt:
+          - SumoS3Source
+          - SUMO_ENDPOINT
       Protocol: https
       TopicArn:
-        Ref: sumoSNSTopic
+        Ref: sumoS3SorceTopic
     Type: AWS::SNS::Subscription
-  sumoSNSTopic:
-    Properties:
-      TopicName:
-        Fn::Sub: SumoSNSTopic-${AWS::StackName}
-    Type: AWS::SNS::Topic
   sumoSNSpolicy:
     Properties:
       PolicyDocument:
         Id: SumoTopicPolicy
         Statement:
-        - Action:
-          - sns:Publish
+        - Action: sns:Publish
           Condition:
             ArnLike:
               aws:SourceArn:
-                Fn::Sub: arn:aws:s3:::${CISTargetS3BucketName}
+                Fn::Sub: arn:aws:s3:*:*:${LogsTargetS3BucketName}
             StringEquals:
               aws:SourceAccount:
                 Ref: AWS::AccountId
@@ -338,8 +372,8 @@ Resources:
           Principal:
             AWS: '*'
           Resource:
-          - Ref: sumoSNSTopic
+            Ref: sumoS3SorceTopic
       Topics:
-      - Ref: sumoSNSTopic
+      - Ref: sumoS3SorceTopic
     Type: AWS::SNS::TopicPolicy
 Transform: AWS::Serverless-2016-10-31
