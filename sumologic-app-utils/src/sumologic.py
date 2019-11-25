@@ -1,6 +1,7 @@
 import json
 import requests
 import time
+import random
 
 try:
     import cookielib
@@ -8,7 +9,6 @@ except ImportError:
     import http.cookiejar as cookielib
 
 DEFAULT_VERSION = 'v1'
-SLEEP_TIME = 7
 
 
 class SumoLogic(object):
@@ -212,7 +212,7 @@ class SumoLogic(object):
         return self.get('/content/folders/%s/import/%s/status' % (folder_id, job_id), version='v2')
 
     def install_app(self, app_id, content):
-        time.sleep(SLEEP_TIME)
+        time.sleep(random.randint(1, 10))
         return self.post('/apps/%s/install' % (app_id), params=content)
 
     def check_app_install_status(self, app_id, job_id):
