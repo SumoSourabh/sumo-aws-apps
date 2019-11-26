@@ -7,19 +7,6 @@ Globals:
     Function:
         Timeout: 300
 
-Metadata:
-  AWS::ServerlessRepo::Application:
-    Name: sumo-app-util
-    Description: SumoAppUtils
-    Author: user1
-    SpdxLicenseId: Apache-2.0
-    LicenseUrl: "./../licence.txt"
-    ReadmeUrl: "./README.md"
-    Labels: ['tests']
-    HomePageUrl: https://github.com/user1/my-app-project
-    SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/user1/my-app-project
-
 Resources:
   SumoAppUtilsFunction:
       Type: 'AWS::Serverless::Function'
