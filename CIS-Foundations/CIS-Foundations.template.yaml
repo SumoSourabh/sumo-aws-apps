@@ -158,14 +158,17 @@ Resources:
               - !Sub
                 - arn:aws:s3:::${CISTargetS3BucketName}/*
                 - { S3bucketName: !Ref CISTargetS3BucketName  }
-  
+
   SumoAppUtils:
-    Type: AWS::CloudFormation::Stack
+    Type: 'AWS::Serverless::Function'
     Properties:
-      TemplateURL: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}submodules/sumo-aws-apps/sumologic-app-utils/sumo_app_utils.yaml"
-      Parameters:
-        QSS3BucketName: !Ref QSS3BucketName
-        QSS3KeyPrefix: !Ref QSS3KeyPrefix
+      Handler: main.handler
+      Runtime: python3.7
+      CodeUri:
+        Bucket: !Ref QSS3BucketName
+        Key: !Sub "${QSS3KeyPrefix}submodules/sumo-aws-apps/sumologic-app-utils/sumo_app_utils.zip"
+      MemorySize: 128
+      Timeout: 300
   
   TargetS3Bucket:
     Type: AWS::S3::Bucket
