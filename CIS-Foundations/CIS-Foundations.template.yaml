@@ -72,6 +72,7 @@ Parameters:
     Default: CISFoundtaionsSource
   SourceCategoryName:
     Type: String
+    Description: Source Category Name.
   SumoAccessID:
     Type: String
   SumoAccessKey:
