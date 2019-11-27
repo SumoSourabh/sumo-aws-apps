@@ -324,7 +324,7 @@ Resources:
     Type: AWS::S3::BucketPolicy
     Condition: CreateTrailForCloudTrail
     Properties:
-      Bucket: !Ref CloudTrailTargetS3BucketName
+      Bucket: !Ref LogsTargetS3BucketName
       PolicyDocument:
         Statement:
           - Sid: AWSCloudTrailAclCheck
@@ -333,14 +333,14 @@ Resources:
               Service: cloudtrail.amazonaws.com
             Action: s3:GetBucketAcl
             Resource:
-              - !Sub "arn:aws:s3:::${CloudTrailTargetS3BucketName}"
+              - !Sub "arn:aws:s3:::${LogsTargetS3BucketName}"
           - Sid: AWSCloudTrailWrite
             Effect: Allow
             Principal:
               Service: cloudtrail.amazonaws.com
             Action: s3:PutObject
             Resource:
-              - !Sub "arn:aws:s3:::${CloudTrailTargetS3BucketName}/*"
+              - !Sub "arn:aws:s3:::${LogsTargetS3BucketName}/*"
             Condition:
               StringEquals:
                 s3:x-amz-acl: bucket-owner-full-control
@@ -352,7 +352,7 @@ Resources:
     Properties:
       IsLogging: True
       IsMultiRegionTrail: False
-      S3BucketName: !Ref CloudTrailTargetS3BucketName
+      S3BucketName: !Ref LogsTargetS3BucketName
       TrailName: !Sub "SumoCloudTrail-${AWS::StackName}"
     Type: AWS::CloudTrail::Trail
       
