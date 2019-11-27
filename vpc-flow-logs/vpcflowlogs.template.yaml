@@ -269,8 +269,8 @@ Resources:
           name: !Ref ExcludeRuleName
           regexp: !Ref ExcludeRule   
       RoleArn: !GetAtt SumoRole.Arn
-      multilineProessing: false
-      autolineMatching": false
+      multilineProcessingEnabled: false
+      useAutolineMatching": false
 
   SumoAmazonVPCFlowLogAApp:
     Type: Custom::App
