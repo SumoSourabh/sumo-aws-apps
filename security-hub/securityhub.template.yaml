@@ -3,53 +3,141 @@ Transform: 'AWS::Serverless-2016-10-31'
 Description: An AWS Serverless Specification template describing your function.
 
 Metadata:
-  AWS::ServerlessRepo::Application:
-    Name: sumologic-amazon-security-hub
-    Description: Sumologic AWS Security Hub Application.
-    Author: SumoLogic
-    SpdxLicenseId: Apache-2.0
-    LicenseUrl: "./../licence.txt"
-    ReadmeUrl: "./README.md"
-    Labels:
-    - lambda
-    - sumologic
-    - serverless
-    - securityhub
-    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
-    SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "Sumo Logic Deployment Configuration"
+        Parameters:
+          - SumoDeployment
+          - SumoAccessID
+          - SumoAccessKey
+      -
+        Label:
+          default: "Sumo Logic Collection Configuration"
+        Parameters:
+          - CollectorName
+          - SourceName
+          - SourceCategoryName
+          - PathExpression
+          - RemoveSumoResourcesOnDeleteStack
+      -
+        Label:
+          default: "Security Hub S3 Configuration"
+        Parameters:
+          - ExternalID
+          - S3BucketName
+          - CreateTargetS3Bucket
+
+      -
+        Label:
+          default: "AWS Quick Start configuration"
+        Parameters:
+          - QSS3BucketName
+          - QSS3KeyPrefix
+
+      -
+        Label:
+          default: "Security Hub configuration"
+        Parameters:
+          - EnableSecurityHub
+          - ConnectionName
+
+    ParameterLabels:
+      SumoDeployment:
+        default: "Deployment Name"
+      SumoAccessID:
+        default: "Access ID"
+      SumoAccessKey:
+        default: "Access Key"
+      CollectorName:
+        default: "Collector Name"
+      SourceName:
+        default: "Source Name"
+      SourceCategoryName:
+        default: "Source Category"
+      PathExpression:
+        default: "Path Expression"
+      RemoveSumoResourcesOnDeleteStack:
+        default: "Remove Sumo Resources On Delete Stack"
+      ExternalID:
+        default: "IAM Role ExternalID"
+      S3BucketName:
+        default: "Target BucketName"
+      CreateTargetS3Bucket:
+        default: "Do you want to create a target S3 bucket?"
+      QSS3BucketName:
+        default: "Quick Start S3 bucket name"
+      QSS3KeyPrefix:
+        default: "Quick Start S3 key prefix"
+      EnableSecurityHub:
+        default: "Enable Security Hub"
+      ConnectionName:
+        default: "Connection Name"
 
 Parameters:
-  EnableSecurityHub:
-    Type: String
-    Default: "no"
-    AllowedValues: ["yes", "no"]
-  S3BucketName:
-    Type: String
   CollectorName:
     Type: String
+    Default: SecurityHubCollector
+  SourceName:
+    Type: String
+    Default: SecurityHubEvents
+  SourceCategoryName:
+    Type: String
+    Description: Category metadata to use later for querying, e.g. prod/web/apache/access . This data is queried using the '_sourceCategory' key name.
   SumoAccessID:
     Type: String
   SumoAccessKey:
     Type: String
   SumoDeployment:
     Type: String
-  ConnectionName:
-    Type: String
+    AllowedValues:
+      - au
+      - ca
+      - de
+      - eu
+      - jp
+      - us2
+      - us1
+    Description: "Enter au, ca, de, eu, jp, us2, or us1"
   RemoveSumoResourcesOnDeleteStack:
-    Type: String
-  SourceName:
-    Type: String
-  SourceCategoryName:
-    Type: String
-  PathExpression:
+    AllowedValues:
+      - true
+      - false
+    Default: false
+    Description: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is false.
     Type: String
   ExternalID:
     Type: String
+    Description: An ID used in the trust policy to designate who can assume the role, formatted as deployment:accountId. Eg. us1:0000000000000131
+  S3BucketName:
+    Type: String
+    Description: Security Hub target buket name.
   CreateTargetS3Bucket:
     Type: String
     Default: "no"
     AllowedValues: ["yes", "no"]
+  PathExpression:
+    Type: String
+    Description: Path expression to match one or more S3 objects. For example, ABC*.log or ABC.log
+  QSS3BucketName:
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    ConstraintDescription: "Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+    Default: "aws-quickstart"
+    Description: "S3 bucket name for the Quick Start assets. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+    Type: "String"
+  QSS3KeyPrefix:
+    AllowedPattern: "^[0-9a-zA-Z-/]*$"
+    ConstraintDescription: "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+    Default: "quickstart-sumo-logic-log-centralization/"
+    Description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+    Type: "String"
+  EnableSecurityHub:
+    Type: String
+    Default: "no"
+    AllowedValues: ["yes", "no"]
+  ConnectionName:
+    Type: String
 
 Conditions:
   EnableSecurityHub: !Equals [ !Ref EnableSecurityHub, "yes" ]
@@ -62,6 +150,7 @@ Resources:
       Location:
         ApplicationId: arn:aws:serverlessrepo:us-east-1:956882708938:applications/sumologic-securityhub-forwarder
         SemanticVersion: 1.0.7
+
   SecurityHubCollector:
     Type: 'AWS::Serverless::Application'
     Properties:
@@ -70,11 +159,13 @@ Resources:
         SemanticVersion: 1.0.8
       Parameters:
         S3SourceBucketName: !Ref S3BucketName
+
   SecurityHubUserKey:
     Type: AWS::IAM::AccessKey
     Properties:
       UserName:
         Ref: SecurityHubUser
+
   SecurityHubUser:
     Type: AWS::IAM::User
     Properties:
@@ -87,6 +178,7 @@ Resources:
               - Effect: Allow
                 Action: execute-api:Invoke
                 Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*/*/POST/findings
+
   SecurityHubConfiguration:
     Type: AWS::SecurityHub::Hub
     Condition: EnableSecurityHub
@@ -96,7 +188,9 @@ Resources:
     Properties:
       Handler: main.handler
       Runtime: python3.7
-      CodeUri: "../sumologic-app-utils/src/"
+      CodeUri:
+        Bucket: !Ref QSS3BucketName
+        Key: !Sub "${QSS3KeyPrefix}submodules/sumo-aws-apps/sumologic-app-utils/sumo_app_utils.zip"
       MemorySize: 128
       Timeout: 300
 

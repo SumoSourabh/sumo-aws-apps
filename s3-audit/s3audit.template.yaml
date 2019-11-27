@@ -28,7 +28,9 @@ Metadata:
           - ExternalID
           - AccessLogsTargetS3BucketName
           - CreateTargetS3Bucket
-      - Label:
+
+      -
+        Label:
           default: "AWS Quick Start configuration"
         Parameters:
           - QSS3BucketName
