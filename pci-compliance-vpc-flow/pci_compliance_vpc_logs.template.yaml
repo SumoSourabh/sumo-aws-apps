@@ -155,7 +155,6 @@ Resources:
         PathExpression: !Ref PathExpression
         ExternalID: !Ref ExternalID
         MultilineProcessingEnabled: False
-        useAutolineMatching: False
         ExcludeRuleName: !Ref ExcludeRuleName
         ExcludeRule: !Ref ExcludeRule
         QSS3BucketName: !Ref QSS3BucketName
