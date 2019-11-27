@@ -9,22 +9,6 @@ Globals:
         Timeout: 300
 
 Metadata:
-  AWS::ServerlessRepo::Application:
-    Name: sumologic-amazon-guardduty
-    Description: This solution creates resources for processing and sending Amazon GuardDuty Events to Sumo logic.
-    Author: SumoLogic
-    SpdxLicenseId: Apache-2.0
-    LicenseUrl: "./../licence.txt"
-    ReadmeUrl: "./README.md"
-    Labels:
-    - lambda
-    - sumologic
-    - serverless
-    - guarduty
-    HomePageUrl: https://github.com/SumoLogic/sumologic-aws-lambda
-    SemanticVersion: 0.0.1
-    SourceCodeUrl: https://github.com/SumoLogic/sumologic-aws-lambda
-
   AWS::CloudFormation::Interface:
     ParameterGroups:
       -
@@ -42,6 +26,14 @@ Metadata:
           - SourceName
           - SourceCategoryName
           - RemoveSumoResourcesOnDeleteStack
+
+      -
+        Labels:
+          default: "AWS Quick Start configuration"
+        Parameters:
+            - QSS3BucketName
+            - QSS3KeyPrefix
+
     ParameterLabels:
       SumoDeployment:
         default: "Deployment Name"
@@ -57,6 +49,10 @@ Metadata:
         default: "Source Category Name"
       RemoveSumoResourcesOnDeleteStack:
         default: "Remove Sumo Resources On Delete Stack"
+      QSS3BucketName:
+        default: "Quick Start S3 bucket name"
+      QSS3KeyPrefix:
+        default: "Quick Start S3 key prefix"
 
 Parameters:
   CollectorName:
@@ -90,13 +86,27 @@ Parameters:
     Default: false
     Description: To delete collector, sources and app when stack is deleted, set this parameter to true. Default is false.
     Type: String
+  QSS3BucketName:
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    ConstraintDescription: "Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+    Default: "aws-quickstart"
+    Description: "S3 bucket name for the Quick Start assets. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+    Type: "String"
+  QSS3KeyPrefix:
+    AllowedPattern: "^[0-9a-zA-Z-/]*$"
+    ConstraintDescription: "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+    Default: "quickstart-sumo-logic-log-centralization/"
+    Description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+    Type: "String"
 
 Resources:
 
     CloudWatchEventFunction:
         Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
         Properties:
-            CodeUri: src/
+            CodeUri:
+              Bucket: !Ref QSS3BucketName
+              Key: !Sub "${QSS3KeyPrefix}submodules/sumo-aws-apps/guardduty/cloudwatchevents.zip"
             Handler: cloudwatchevents.handler
             Runtime: nodejs8.10
             Environment:
@@ -109,16 +119,17 @@ Resources:
                       Pattern:
                         source:
                           - aws.guardduty
+
     SumoAppUtils:
-      Type: AWS::Serverless::Function
+      Type: 'AWS::Serverless::Function'
       Properties:
         Handler: main.handler
         Runtime: python3.7
-        CodeUri: "../sumologic-app-utils/src/"
+        CodeUri:
+          Bucket: !Ref QSS3BucketName
+          Key: !Sub "${QSS3KeyPrefix}submodules/sumo-aws-apps/sumologic-app-utils/sumo_app_utils.zip"
         MemorySize: 128
         Timeout: 300
-
-
 
     SumoHostedCollector:
       Type: Custom::Collector
