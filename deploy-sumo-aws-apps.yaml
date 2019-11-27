@@ -297,6 +297,7 @@ Parameters:
   InstallCloudTrailApp:
     Type: String
     Default: "yes"
+    Description: Install Cloud Trail App.
     AllowedValues:
       - "yes"
       - "no"
