@@ -648,7 +648,7 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Condition: InstallPCICloudTrailCondition
     Properties:
-      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/pci-compliance-cloudttrial-app-template-2019-11-25-18-07-11.yaml"
+      TemplateURL: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/pci-compliance-cloudtrail-app-template-2019-11-25-18-07-11.yaml"
       Parameters:
         S3SourceUtilTempalteS3Url: "https://sumologic-appdev-aws-sam-apps.s3.amazonaws.com/sumo-s3-source-utils-2019-11-25-18-06-59.yaml"
         SumoDeployment: !Ref SumoDeployment
