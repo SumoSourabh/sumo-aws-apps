@@ -27,6 +27,7 @@ Metadata:
           - MultilineProcessingEnabled
           - ExcludeRuleName
           - ExcludeRule
+          - CreateTrail
           
       - Label:
           default: "AWS Quick Start configuration"
@@ -62,6 +63,8 @@ Metadata:
         default: "Quick Start S3 bucket name"
       QSS3KeyPrefix:
         default: "Quick Start S3 key prefix"
+      CreateTrail:
+        default: "Create cloud trail"
       
 
 Parameters:
@@ -147,12 +150,18 @@ Parameters:
     Default: "quickstart-sumo-logic-log-centralization/"
     Description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
     Type: "String"
+  CreateTrail:
+    Type: String
+    Default: "no"
+    AllowedValues: ["yes", "no"]
+
     
 Conditions:
   CreateBucket: !Equals [ !Ref CreateTargetS3Bucket, "yes" ]
   CreateAwsCloudTrail: !Equals [ !Ref SumoSourceType, "AwsCloudTrail" ]
   CreateS3Audit: !Equals [ !Ref SumoSourceType, "S3AuditSource" ]
   CreateS3Source: !Equals [ !Ref SumoSourceType, "S3Source" ]
+  CreateTrailForCloudTrail: !Equals [ !Ref CreateTrail, "yes" ]
   
     
 
@@ -310,6 +319,42 @@ Resources:
       TargetBucketName: !Ref LogsTargetS3BucketName
       PathExpression: !Ref PathExpression
       RoleArn: !GetAtt SumoRole.Arn
+
+  sumoS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: CreateTrailForCloudTrail
+    Properties:
+      Bucket: !Ref CloudTrailTargetS3BucketName
+      PolicyDocument:
+        Statement:
+          - Sid: AWSCloudTrailAclCheck
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource:
+              - !Sub "arn:aws:s3:::${CloudTrailTargetS3BucketName}"
+          - Sid: AWSCloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource:
+              - !Sub "arn:aws:s3:::${CloudTrailTargetS3BucketName}/*"
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+
+  sumoCloudTrail:
+    Condition: CreateTrailForCloudTrail
+    DependsOn:
+      - sumoS3BucketPolicy
+    Properties:
+      IsLogging: True
+      IsMultiRegionTrail: False
+      S3BucketName: !Ref CloudTrailTargetS3BucketName
+      TrailName: !Sub "SumoCloudTrail-${AWS::StackName}"
+    Type: AWS::CloudTrail::Trail
       
 
 Outputs:
