@@ -164,35 +164,37 @@ class Collector(Resource):
             "collector_id": collector_id
         }
 
+
 class Connections(Resource):
 
-    def create(self, type, name, description, url, username, password, region, service_name, webhook_type, *args, **kwargs):
+    def create(self, type, name, description, url, username, password, region, service_name, webhook_type, *args,
+               **kwargs):
         connection_id = None
         connection = {
-                'type': type,
-                'name': name,
-                'description': description,
-                'headers': [
-                    {
-                        'name': 'accessKey',
-                        'value': username
-                    },
-                    {
-                        'name': 'secretKey',
-                        'value': password
-                    },
-                    {
-                        'name': 'awsRegion',
-                        'value': region
-                    },
-                    {
-                        'name': 'serviceName',
-                        'value': service_name
-                    }
-                ],
-                'defaultPayload': '{"Types":"HIPAA Controls","Description":"This search","GeneratorID":"InsertFindingsScheduledSearch","Severity":30,"SourceUrl":"https://service.sumologic.com/ui/#/search/RmC8kAUGZbXrkj2rOFmUxmHtzINUgfJnFplh3QWY","ComplianceStatus":"FAILED","Rows":"[{\\"Timeslice\\":1542719060000,\\"finding_time\\":\\"1542719060000\\",\\"item_name\\":\\"A nice dashboard.png\\",\\"title\\":\\"Vulnerability\\",\\"resource_id\\":\\"10.178.11.43\\",\\"resource_type\\":\\"Other\\"}]"}',
-                'url': url,
-                'webhookType': webhook_type
+            'type': type,
+            'name': name,
+            'description': description,
+            'headers': [
+                {
+                    'name': 'accessKey',
+                    'value': username
+                },
+                {
+                    'name': 'secretKey',
+                    'value': password
+                },
+                {
+                    'name': 'awsRegion',
+                    'value': region
+                },
+                {
+                    'name': 'serviceName',
+                    'value': service_name
+                }
+            ],
+            'defaultPayload': '{"Types":"HIPAA Controls","Description":"This search","GeneratorID":"InsertFindingsScheduledSearch","Severity":30,"SourceUrl":"https://service.sumologic.com/ui/#/search/RmC8kAUGZbXrkj2rOFmUxmHtzINUgfJnFplh3QWY","ComplianceStatus":"FAILED","Rows":"[{\\"Timeslice\\":1542719060000,\\"finding_time\\":\\"1542719060000\\",\\"item_name\\":\\"A nice dashboard.png\\",\\"title\\":\\"Vulnerability\\",\\"resource_id\\":\\"10.178.11.43\\",\\"resource_type\\":\\"Other\\"}]"}',
+            'url': url,
+            'webhookType': webhook_type
         }
         try:
             resp = self.sumologic_cli.create_connection(connection, headers=None)
@@ -201,7 +203,7 @@ class Connections(Resource):
         except Exception as e:
             print(e.response.json())
             if hasattr(e, 'response'):
-                errors =  e.response.json()["errors"]
+                errors = e.response.json()["errors"]
                 for error in errors:
                     if error.get('code') == 'connection:name_already_exists':
                         connection_id = e.response.json().get('id')
@@ -226,7 +228,7 @@ class Connections(Resource):
     def delete(self, connection_id, remove_on_delete_stack, *args, **kwargs):
         if remove_on_delete_stack:
             response = self.sumologic_cli.delete_connection(connection_id, 'WebhookConnection')
-            print("deleted connection %s" % (connection_id, response.text))
+            print("deleted connection %s %s" % (connection_id, response.text))
         else:
             print("skipping connection deletion")
 
@@ -250,7 +252,8 @@ class Connections(Resource):
 
 
 class S3SourceBase(Resource):
-    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, source_type, props, *args, **kwargs):
+    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, source_type,
+               props, *args, **kwargs):
 
         endpoint = source_id = None
         params = {
@@ -277,13 +280,13 @@ class S3SourceBase(Resource):
             "category": source_category
         }
 
-        if 'filters' in props :
+        if 'filters' in props:
             filters = props.get('filters')
             if isinstance(filters, list):
                 filters[:] = [x for x in filters if x['regexp'].strip()]
                 if filters:
                     params['filters'] = filters
-        if 'multilineProcessingEnabled' in props :
+        if 'multilineProcessingEnabled' in props:
             params['multilineProcessingEnabled'] = props.get('multilineProcessingEnabled')
         if 'useAutolineMatching' in props:
             params['useAutolineMatching'] = props.get('useAutolineMatching')
@@ -342,20 +345,27 @@ class S3SourceBase(Resource):
             "props": props
         }
 
+
 class S3AuditSource(S3SourceBase):
-    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, props, *args, **kwargs):
+    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, props, *args,
+               **kwargs):
         return super().create(collector_id, source_name, source_category,
                               bucket_name, path_expression, role_arn, 'AwsS3AuditBucket', props, *args, **kwargs)
 
+
 class S3Source(S3SourceBase):
-    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, props, *args, **kwargs):
+    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, props, *args,
+               **kwargs):
         return super().create(collector_id, source_name, source_category,
                               bucket_name, path_expression, role_arn, 'AwsS3Bucket', props, *args, **kwargs)
 
+
 class AwsCloudTrail(S3SourceBase):
-    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, props, *args, **kwargs):
+    def create(self, collector_id, source_name, source_category, bucket_name, path_expression, role_arn, props, *args,
+               **kwargs):
         return super().create(collector_id, source_name, source_category,
                               bucket_name, path_expression, role_arn, 'AwsCloudTrailBucket', props, *args, **kwargs)
+
 
 class HTTPSource(Resource):
 
@@ -560,21 +570,24 @@ class App(Resource):
             response = self.sumologic_cli.check_app_install_status(app_id, job_id)
             waiting = response.json()['status'] == "InProgress"
             time.sleep(5)
-
-        return response
         print("job status: %s" % response.text)
+        return response
 
     def _create_or_fetch_quickstart_apps_parent_folder(self):
         response = self.sumologic_cli.get_personal_folder()
-        folder_name = "SumoLogic Amazon QuickStart Apps "+str(datetime.now().strftime("%d-%m-%Y"))
+        folder_name = "SumoLogic Amazon QuickStart Apps " + str(datetime.now().strftime("%d-%m-%Y"))
         description = "This folder contains all the apps created as a part of SumoLogic Amazon QuickStart Apps."
-        if "children" in response.json():
-            for children in response.json()["children"]:
-                if "name" in children and children["name"] == folder_name:
-                    return children["id"]
-
-        folder = self.sumologic_cli.create_folder(folder_name, description, response.json()['id'])
-        return folder.json()["id"]
+        try:
+            folder = self.sumologic_cli.create_folder(folder_name, description, response.json()['id'])
+            return folder.json()["id"]
+        except Exception as e:
+            if hasattr(e, 'response') and e.response.json()["code"] == 'content:duplicate_content':
+                if "children" in response.json():
+                    for children in response.json()["children"]:
+                        if "name" in children and children["name"] == folder_name:
+                            return children["id"]
+            else:
+                raise
 
     def create(self, appid, appname, source_params, *args, **kwargs):
         # Add  retry if folder sync fails
@@ -582,7 +595,8 @@ class App(Resource):
             raise Exception("%s is available to Enterprise or Trial Account Type only." % appname)
 
         folder_id = self._create_or_fetch_quickstart_apps_parent_folder()
-        content = {'name': appname+datetime.now().strftime("_%d-%b-%Y_%H:%M:%S.%f"), 'description': appname, 'dataSourceValues': source_params,
+        content = {'name': appname + datetime.now().strftime("_%d-%b-%Y_%H:%M:%S.%f"), 'description': appname,
+                   'dataSourceValues': source_params,
                    'destinationFolderId': folder_id}
         # app_folder_id = self._get_app_folder(content, personal_folder_id)
 
@@ -592,7 +606,7 @@ class App(Resource):
             appname, folder_id, folder_id, job_id))
         response = self._wait_for_app_install(appid, job_id)
         json_resp = json.loads(response.content)
-        if(json_resp['status'] == 'Success'):
+        if (json_resp['status'] == 'Success'):
             folder_name = json_resp['statusMessage'].split(":")[1]
             return {"APP_FOLDER_NAME": content["name"]}, folder_name
         else:
@@ -660,9 +674,9 @@ if __name__ == '__main__':
     }
     col = Collector(**params)
     src = S3AuditSource(**params)
-    #app = App(**params)
+    # app = App(**params)
 
-    props ={
+    props = {
         "filters": [{
             "filterType": "Exclude",
             "name": "test",
@@ -675,26 +689,27 @@ if __name__ == '__main__':
 
     # create
     _, collector_id = col.create(collector_type, collector_name, source_category)
-    #_, source_id = src.create(collector_id, source_name, source_category)
-    _, source_id = src.create(collector_id, 's3-audit-src', source_category, 'sumolog-s3-audit', 'sumo*', 'arn:aws:iam::296516481872:role/sumo-s3-audit', props)
+    # _, source_id = src.create(collector_id, source_name, source_category)
+    _, source_id = src.create(collector_id, 's3-audit-src', source_category, 'sumolog-s3-audit', 'sumo*',
+                              'arn:aws:iam::296516481872:role/sumo-s3-audit', props)
 
-    #_, app_folder_id = app.create('5a58719f-0f8a-4aa7-993f-9cc337a286aa', appname, source_params)
-    #print(app_folder_id)
+    # _, app_folder_id = app.create('5a58719f-0f8a-4aa7-993f-9cc337a286aa', appname, source_params)
+    # print(app_folder_id)
 
     # update
-    #_, new_collector_id = col.update(collector_id, collector_type, "GuarddutyCollectorNew", "Labs/AWS/GuarddutyNew",
-                                     #description="Guardduty Collector")
-    #assert (collector_id == new_collector_id)
-   # _, new_source_id = src.update(collector_id, source_id, "GuarddutyEventsNew", "Labs/AWS/GuarddutyNew",
-                                  #date_format="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", date_locator='\"createTime\":(.*),')
-    #assert (source_id == new_source_id)
-    #new_source_params = {
-     #   "logsrc": "_sourceCategory=%s" % "Labs/AWS/GuarddutyNew"
-    #}
-    #_, new_app_folder_id = app.update(app_folder_id, appname, new_source_params)
-    #assert (app_folder_id != new_app_folder_id)
+    # _, new_collector_id = col.update(collector_id, collector_type, "GuarddutyCollectorNew", "Labs/AWS/GuarddutyNew",
+    # description="Guardduty Collector")
+    # assert (collector_id == new_collector_id)
+    # _, new_source_id = src.update(collector_id, source_id, "GuarddutyEventsNew", "Labs/AWS/GuarddutyNew",
+    # date_format="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", date_locator='\"createTime\":(.*),')
+    # assert (source_id == new_source_id)
+    # new_source_params = {
+    #   "logsrc": "_sourceCategory=%s" % "Labs/AWS/GuarddutyNew"
+    # }
+    # _, new_app_folder_id = app.update(app_folder_id, appname, new_source_params)
+    # assert (app_folder_id != new_app_folder_id)
 
     # delete
     src.delete(collector_id, source_id, True)
     col.delete(collector_id, True)
-    #app.delete(app_folder_id, True)
+    # app.delete(app_folder_id, True)
