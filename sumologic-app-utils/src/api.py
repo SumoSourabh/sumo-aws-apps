@@ -661,8 +661,8 @@ class App(Resource):
 if __name__ == '__main__':
     params = {
 
-        "access_id": "suRdztXAKWdlKj",
-        "access_key": "Xe1bMKaRIXmRYxAPh7GUxA4fce3s2GCC2YVDYJzeqyFuyM4czEzbEkUyXsVRL6ZE",
+        "access_id": "",
+        "access_key": "",
         "deployment": "us1"
 
     }
