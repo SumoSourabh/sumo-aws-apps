@@ -581,11 +581,14 @@ class App(Resource):
             folder = self.sumologic_cli.create_folder(folder_name, description, response.json()['id'])
             return folder.json()["id"]
         except Exception as e:
-            if hasattr(e, 'response') and e.response.json()["code"] == 'content:duplicate_content':
-                if "children" in response.json():
-                    for children in response.json()["children"]:
-                        if "name" in children and children["name"] == folder_name:
-                            return children["id"]
+            if hasattr(e, 'response') and e.response.json()["errors"]:
+                errors = e.response.json()["errors"]
+                for error in errors:
+                    if error.get('code') == 'content:duplicate_content':
+                        if "children" in response.json():
+                            for children in response.json()["children"]:
+                                if "name" in children and children["name"] == folder_name:
+                                    return children["id"]
             else:
                 raise
 
@@ -658,9 +661,9 @@ class App(Resource):
 if __name__ == '__main__':
     params = {
 
-        "access_id": "",
-        "access_key": "",
-        "deployment": "us2"
+        "access_id": "suRdztXAKWdlKj",
+        "access_key": "Xe1bMKaRIXmRYxAPh7GUxA4fce3s2GCC2YVDYJzeqyFuyM4czEzbEkUyXsVRL6ZE",
+        "deployment": "us1"
 
     }
     collector_id = None
@@ -674,7 +677,7 @@ if __name__ == '__main__':
     }
     col = Collector(**params)
     src = S3AuditSource(**params)
-    # app = App(**params)
+    app = App(**params)
 
     props = {
         "filters": [{
@@ -687,11 +690,10 @@ if __name__ == '__main__':
         "useAutolineMatching": False
     }
 
+    print(app._create_or_fetch_quickstart_apps_parent_folder())
     # create
-    _, collector_id = col.create(collector_type, collector_name, source_category)
+    # _, collector_id = col.create(collector_type, collector_name, source_category)
     # _, source_id = src.create(collector_id, source_name, source_category)
-    _, source_id = src.create(collector_id, 's3-audit-src', source_category, 'sumolog-s3-audit', 'sumo*',
-                              'arn:aws:iam::296516481872:role/sumo-s3-audit', props)
 
     # _, app_folder_id = app.create('5a58719f-0f8a-4aa7-993f-9cc337a286aa', appname, source_params)
     # print(app_folder_id)
@@ -710,6 +712,6 @@ if __name__ == '__main__':
     # assert (app_folder_id != new_app_folder_id)
 
     # delete
-    src.delete(collector_id, source_id, True)
-    col.delete(collector_id, True)
+    # src.delete(collector_id, source_id, True)
+    # col.delete(collector_id, True)
     # app.delete(app_folder_id, True)
